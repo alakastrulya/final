@@ -1,6 +1,6 @@
 package tanks;
 
-public enum Team { // Class for Team. Is a list with command for game
+public enum Team { // Class for Team. It is list with command for game
     PLAYER,
     ENEMY,
     TERRAIN,

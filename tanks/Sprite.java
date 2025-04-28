@@ -11,8 +11,7 @@ public abstract class Sprite { // Abstract class Sprite for objects to map
     private Team team;
     private int elevation;
 
-    public Sprite() {
-    }
+    public Sprite() {}
 
     public void setCenter(Point center) { // Function which save center
         this.center = center;

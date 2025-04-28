@@ -1,4 +1,8 @@
 package tanks;
 
-public class Entity {
+import java.awt.*;
+
+public interface Entity {
+    void move();
+    void draw(Graphics g);
 }
