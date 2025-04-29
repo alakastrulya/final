@@ -10,6 +10,9 @@ public class Bullet extends Sprite implements Entity {
 
     public Bullet(Tank shooter) {
         this.shooter = shooter;
+
+        setSideLength(6);
+        setCenter(new Point(shooter.getCenter().x, shooter.getCenter().y));
         // Starting position and coordinates
     }
 

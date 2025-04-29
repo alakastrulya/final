@@ -13,10 +13,15 @@ public abstract class Sprite { // Abstract class Sprite for objects to map
     private Team team;
     private int elevation;
 
-    public Sprite() {}
+    public Sprite() {
+        center = new Point(0, 0);
+        sideLength = 24;
+        updateRectangle();
+    }
 
     public void setCenter(Point center) { // Function which save center
         this.center = center;
+        updateRectangle();
     }
 
     public Point getCenter() { // Function which get center position
@@ -25,6 +30,7 @@ public abstract class Sprite { // Abstract class Sprite for objects to map
 
     public void setSideLength(int sideLength) { // Function which save size side
         this.sideLength = sideLength;
+        updateRectangle();
     }
 
     public int getSideLength() { // Function which get size side
@@ -32,14 +38,9 @@ public abstract class Sprite { // Abstract class Sprite for objects to map
     }
 
     public void updateRectangle() { // Function which save rectangle collisions
-        if (center != null) {
-            rectangle = new Rectangle(
-                    center.x - sideLength / 2,
-                    center.y - sideLength / 2,
-                    sideLength,
-                    sideLength
-            );
-        }
+        int x = center.x - sideLength / 2;
+        int y = center.y - sideLength / 2;
+        rectangle = new Rectangle(x, y, sideLength, sideLength);
     }
 
     public Rectangle getRectangle() { // Function which get rectangle collisions
@@ -69,8 +70,6 @@ public abstract class Sprite { // Abstract class Sprite for objects to map
     public int getElevation() { // Function which get object's height
         return elevation;
     }
-
-
 
     public abstract void move(); // Abstract function for moving
     public abstract void draw(Graphics g); // Abstract function for draw
