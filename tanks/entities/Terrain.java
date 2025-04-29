@@ -1,7 +1,7 @@
 package tanks.entities;
 
 import tanks.core.Sprite;
-import tanks.factories.Entity;
+import tanks.core.Entity;
 
 import java.awt.*;
 
