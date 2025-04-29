@@ -1,4 +1,4 @@
-package tanks;
+package tanks.core;
 
 public class EntityFactory {
 }

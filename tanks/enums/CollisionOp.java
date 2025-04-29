@@ -1,6 +1,6 @@
-package tanks;
+package tanks.enums;
 
-import tanks.Sprite;
+import tanks.core.Sprite;
 
 public class CollisionOp { // Class CollisionOp which describe conflicts
 

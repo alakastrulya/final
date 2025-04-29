@@ -1,4 +1,7 @@
-package tanks;
+package tanks.core;
+
+import tanks.entities.Tank;
+import tanks.enums.CollisionOpList;
 
 public class Cc { // Class Cc (Singleton), it manages all date from game
 

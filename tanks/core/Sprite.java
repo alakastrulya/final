@@ -1,4 +1,6 @@
-package tanks;
+package tanks.core;
+
+import tanks.entities.Team;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

@@ -1,8 +1,11 @@
-package tanks;
+package tanks.entities;
+
+import tanks.core.Sprite;
+import tanks.factories.Entity;
 
 import java.awt.*;
 
-public class Terrain extends Sprite implements Entity{
+public class Terrain extends Sprite implements Entity {
 
     public Terrain(String type, int row, int col, int convID) {
         // Create parameters for Terrain

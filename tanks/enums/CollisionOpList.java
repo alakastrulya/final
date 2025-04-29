@@ -1,4 +1,6 @@
-package tanks;
+package tanks.enums;
+
+import tanks.core.Sprite;
 
 import java.util.LinkedList;
 import java.util.Queue;

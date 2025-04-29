@@ -1,8 +1,11 @@
-package tanks;
+package tanks.entities;
+
+import tanks.core.Sprite;
+import tanks.factories.Entity;
 
 import java.awt.*;
 
-public class Bullet extends Sprite implements Entity{
+public class Bullet extends Sprite implements Entity {
     private Tank shooter;
 
     public Bullet(Tank shooter) {

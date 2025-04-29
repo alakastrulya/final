@@ -1,4 +1,7 @@
-package tanks;
+package tanks.entities;
+
+import tanks.core.Sprite;
+import tanks.factories.Entity;
 
 import java.awt.Graphics;
 

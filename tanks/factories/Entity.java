@@ -1,4 +1,4 @@
-package tanks;
+package tanks.factories;
 
 import java.awt.*;
 
