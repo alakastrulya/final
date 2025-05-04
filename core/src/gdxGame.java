@@ -6,7 +6,6 @@ public class gdxGame extends Game {
 
     @Override
     public void create(){
-        menuScreen = new MenuScreen(this);
-        setScreen(menuScreen);
+
     }
 }

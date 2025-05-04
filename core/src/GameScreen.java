@@ -1,7 +1,11 @@
-import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class GameScreen implements Screen {
     private int playerCount;
@@ -21,6 +25,21 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         stateTime = 0F;
         player1 = new Tank("yellow", 1);
+    }
+
+    // Render basics for each screen
+    @Override
+    public void render(float delta){
+
+        Gdx.gl.glClearColor((float)192/255,(float)192/255,(float)192/255,1);
+        Gdx.gl.glClear( GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT );
+        camera.update();
+        stateTime += Gdx.graphics.getDeltaTime();
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.draw(Assets.levelBack, 0, 0, 480, 480);
+        batch.draw(frame, player1.positionX, player1.positionY, 26, 26);
+        batch.end();
     }
     public GameScreen(int playerCount) {
         this.playerCount = playerCount;

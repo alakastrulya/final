@@ -7,6 +7,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class MenuScreen implements Screen {
     private gdxGame game;
+    private OrthographicCamera camera;
+    private SpriteBatch batch;
+    private int selectorPosition = 305;
+    private float stateTime;
 
     @Override
     public void render(float delta){
