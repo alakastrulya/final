@@ -1,6 +1,9 @@
 import com.badlogic.gdx.Screen;
 
 public class MenuScreen implements Screen {
+    private gdxGame game;
+
+
     @Override
     public void resize(int width, int height){
     }

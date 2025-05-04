@@ -1,5 +1,25 @@
 public class GameScreen {
     private int playerCount;
+    private gdxGame game;
+    private OrthographicCamera camera;
+    private SpriteBatch batch;
+    private float stateTime;
+    private Tank player1;
+    private Sound startLevelSound;
+    private Sound engineSound;
+
+    public GameScreen(gdxGame game, int playerCount) {
+        this.playerCount = playerCount;
+        this.game = game;
+        camera = new OrthographicCamera();
+        camera.setToOrtho(true, 640, 480);
+        batch = new SpriteBatch();
+        stateTime = 0F;
+        player1 = new Tank("yellow", 1);
+        Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
+        levelSound.play();
+        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
+    }
     public GameScreen(int playerCount) {
         this.playerCount = playerCount;
     }
