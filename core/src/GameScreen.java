@@ -41,6 +41,12 @@ public class GameScreen implements Screen {
         batch.draw(frame, player1.positionX, player1.positionY, 26, 26);
         batch.end();
     }
+
+    private TextureRegion checkKeyPress(){
+        if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
+            player1.moveDown();
+            Assets.current_frame = Assets.movingForwardAnimation.getKeyFrame(stateTime, true);
+        } }
     public GameScreen(int playerCount) {
         this.playerCount = playerCount;
     }

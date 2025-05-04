@@ -14,6 +14,7 @@ public class MenuScreen implements Screen {
 
     @Override
     public void render(float delta){
+
         Gdx.gl.glClearColor(0.95F, 0.95F, 0.95F, 0.95F);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.update();
@@ -25,7 +26,15 @@ public class MenuScreen implements Screen {
         batch.draw(Assets.spriteBack, 0, 0, 640, 480);
         batch.draw(Assets.current_frame, 190, selectorPosition, 26, 26);
         batch.end();
+
+        if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
+            if (selectorPosition != 342){
+                Assets.selectionSound.play();
+                selectorPosition = 342;
+            }
+        }
     }
+
 
 
     @Override
