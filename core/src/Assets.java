@@ -26,4 +26,25 @@ public class Assets {
     public static Animation<TextureRegion> movingRightAnimation;
     public static Animation<TextureRegion> standByRightAnimation;
 
+    public static float elapsedTime;
+    public static String colour;
+    public static int level;
+
+    public static void loadMenuAssets(){
+        textureBack = new Texture(Gdx.files.internal("sprites/menu/menu.jpg"));
+        textureBack.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        spriteBack = new Sprite(textureBack);
+        spriteBack.flip(false, true);
+
+        yellowTankRight1_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right1.png"));
+        yellowTankRight2_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right2.png"));
+        sheet_frames = new TextureRegion[2];
+
+        sheet_frames[1] = new TextureRegion(yellowTankRight1_Texture, 0,0, 13, 13);
+        sheet_frames[0] = new TextureRegion(yellowTankRight2_Texture, 0,0, 13, 13);
+
+        movingTankAnimation = new Animation<>(0.1F, sheet_frames);
+        selectionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/menuSelect.mp3"));
+    }
+
 }
