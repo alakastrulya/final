@@ -5,7 +5,9 @@ import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-public class Assets {
+
+public class Assets{
+
     public static Texture textureBack;
     public static Sprite spriteBack;
     public static Texture yellowTankRight1_Texture;
@@ -53,5 +55,4 @@ public class Assets {
         loadSounds();
 
     }
-
 }

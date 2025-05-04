@@ -1,5 +1,7 @@
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
@@ -7,7 +9,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-public class GameScreen implements Screen {
+public class GameScreen implements Screen{
+
     private int playerCount;
     private gdxGame game;
     private OrthographicCamera camera;
@@ -25,6 +28,9 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         stateTime = 0F;
         player1 = new Tank("yellow", 1);
+        Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
+        levelSound.play();
+        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
     }
 
     // Render basics for each screen
@@ -35,6 +41,7 @@ public class GameScreen implements Screen {
         Gdx.gl.glClear( GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT );
         camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
+        TextureRegion frame = checkKeyPress();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
@@ -46,38 +53,46 @@ public class GameScreen implements Screen {
         if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
             player1.moveDown();
             Assets.current_frame = Assets.movingForwardAnimation.getKeyFrame(stateTime, true);
-        } }
-    public GameScreen(int playerCount) {
-        this.playerCount = playerCount;
+        } else if (Gdx.input.isKeyPressed(Input.Keys.UP)){
+            player1.moveUp();
+            Assets.current_frame = Assets.movingBackwardAnimation.getKeyFrame(stateTime, true);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            player1.moveLeft();
+            Assets.current_frame = Assets.movingLeftAnimation.getKeyFrame(stateTime, true);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            player1.moveRight();
+            Assets.current_frame = Assets.movingRightAnimation.getKeyFrame(stateTime, true);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
+            player1.shoot();
+
+        }
+
+        return Assets.current_frame;
     }
 
     @Override
     public void pause(){
-        System.out.println("Game Paused");
     }
 
     @Override
     public void resume(){
-        System.out.println("Game resumed");
     }
 
     @Override
     public void show(){
-        System.out.println("Player count: " + playerCount);
+
     }
 
     @Override
     public void hide(){
-        System.out.println("Hiding tanks");
     }
 
     @Override
     public void dispose(){
-        System.out.println("Game disposed");
     }
 
     @Override
     public void resize(int width, int height){
-        System.out.println("Game resized");
+
     }
 }
