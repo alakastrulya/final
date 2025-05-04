@@ -1,4 +1,9 @@
-public class GameScreen {
+import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+public class GameScreen implements Screen {
     private int playerCount;
     private gdxGame game;
     private OrthographicCamera camera;
@@ -16,9 +21,6 @@ public class GameScreen {
         batch = new SpriteBatch();
         stateTime = 0F;
         player1 = new Tank("yellow", 1);
-        Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
-        levelSound.play();
-        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
     }
     public GameScreen(int playerCount) {
         this.playerCount = playerCount;
