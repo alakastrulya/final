@@ -47,4 +47,11 @@ public class Assets {
         selectionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/menuSelect.mp3"));
     }
 
+    public static void loadGameAssets(String colour, int level){
+        loadLevel(1);
+        loadTankAnimations(colour, level);
+        loadSounds();
+
+    }
+
 }

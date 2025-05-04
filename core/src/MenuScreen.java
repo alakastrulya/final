@@ -16,6 +16,15 @@ public class MenuScreen implements Screen {
     public void render(float delta){
         Gdx.gl.glClearColor(0.95F, 0.95F, 0.95F, 0.95F);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        camera.update();
+        stateTime += Gdx.graphics.getDeltaTime();
+        Assets.current_frame = Assets.movingTankAnimation.getKeyFrame(stateTime, true);
+        batch.setProjectionMatrix(camera.combined);
+
+        batch.begin();
+        batch.draw(Assets.spriteBack, 0, 0, 640, 480);
+        batch.draw(Assets.current_frame, 190, selectorPosition, 26, 26);
+        batch.end();
     }
 
 
