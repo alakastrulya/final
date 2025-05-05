@@ -8,14 +8,13 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class Assets {
-
     public static Texture textureBack;
     public static Sprite spriteBack;
     public static Texture yellowTankRight1_Texture;
     public static Texture yellowTankRight2_Texture;
     public static Animation<TextureRegion> movingTankAnimation;
     public static TextureRegion[] sheet_frames;
-    public static TextureRegion current_frame; // Добавляем поле current_frame
+    public static TextureRegion current_frame;
     public static Sprite levelBack;
     public static Sound selectionSound;
     public static Sound levelBeginSound;
