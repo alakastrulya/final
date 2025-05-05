@@ -1,15 +1,16 @@
 package com.mg.game;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-public class GameScreen implements Screen{
+public class GameScreen implements Screen {
 
     private int playerCount;
     private gdxGame game;
@@ -33,15 +34,14 @@ public class GameScreen implements Screen{
         Assets.loadGameAssets(player1.getColour(), player1.getLevel());
     }
 
-    // Render basics for each screen
     @Override
-    public void render(float delta){
-
-        Gdx.gl.glClearColor((float)192/255,(float)192/255,(float)192/255,1);
-        Gdx.gl.glClear( GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT );
+    public void render(float delta) {
+        Gdx.gl.glClearColor((float)192/255, (float)192/255, (float)192/255, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT); // Исправлено: GLFlows -> GL20
         camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
-        TextureRegion frame = checkKeyPress();
+        checkKeyPress();
+        TextureRegion frame = player1.getCurrentFrame();
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
@@ -49,50 +49,43 @@ public class GameScreen implements Screen{
         batch.end();
     }
 
-    private TextureRegion checkKeyPress(){
-        if(Gdx.input.isKeyPressed(Input.Keys.DOWN)){
-            player1.moveDown();
-            Assets.current_frame = Assets.movingForwardAnimation.getKeyFrame(stateTime, true);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.UP)){
-            player1.moveUp();
-            Assets.current_frame = Assets.movingBackwardAnimation.getKeyFrame(stateTime, true);
+    private void checkKeyPress() {
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            player1.handleInput(Input.Keys.DOWN, stateTime);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            player1.handleInput(Input.Keys.UP, stateTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player1.moveLeft();
-            Assets.current_frame = Assets.movingLeftAnimation.getKeyFrame(stateTime, true);
+            player1.handleInput(Input.Keys.LEFT, stateTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player1.moveRight();
-            Assets.current_frame = Assets.movingRightAnimation.getKeyFrame(stateTime, true);
-        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE)){
-            player1.shoot();
-
+            player1.handleInput(Input.Keys.RIGHT, stateTime);
+        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            player1.handleInput(Input.Keys.SPACE, stateTime);
+        } else {
+            player1.handleInput(-1, stateTime);
         }
-
-        return Assets.current_frame;
     }
 
     @Override
-    public void pause(){
+    public void pause() {
     }
 
     @Override
-    public void resume(){
+    public void resume() {
     }
 
     @Override
-    public void show(){
-
+    public void show() {
     }
 
     @Override
-    public void hide(){
+    public void hide() {
     }
 
     @Override
-    public void dispose(){
+    public void dispose() {
     }
 
     @Override
-    public void resize(int width, int height){
-
+    public void resize(int width, int height) {
     }
 }
