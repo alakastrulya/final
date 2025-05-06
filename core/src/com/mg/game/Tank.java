@@ -20,7 +20,7 @@ public class Tank {
     private boolean isEnemy;
     private float timeSinceLastMove;
     private float timeSinceLastShot;
-    private static final float MOVE_INTERVAL = 1f; // Интервал смены направления (сек)
+    private static final float MOVE_INTERVAL = 3f; // Увеличиваем интервал до 3 секунд для более медленного движения врагов
     private static final float SHOOT_INTERVAL = 2f; // Интервал стрельбы для врагов (сек)
 
     // Анимации для каждого танка (оставляем private)
@@ -112,22 +112,6 @@ public class Tank {
             timeSinceLastMove = 0;
         }
 
-        // Движение в текущем направлении
-        switch (direction) {
-            case FORWARD:
-                handleInput(com.badlogic.gdx.Input.Keys.DOWN, stateTime);
-                break;
-            case BACKWARD:
-                handleInput(com.badlogic.gdx.Input.Keys.UP, stateTime);
-                break;
-            case LEFT:
-                handleInput(com.badlogic.gdx.Input.Keys.LEFT, stateTime);
-                break;
-            case RIGHT:
-                handleInput(com.badlogic.gdx.Input.Keys.RIGHT, stateTime);
-                break;
-        }
-
         // Стрельба в сторону ближайшего игрока
         if (timeSinceLastShot >= SHOOT_INTERVAL) {
             Tank target = findNearestPlayer(player1, player2);
@@ -142,7 +126,7 @@ public class Tank {
         return null;
     }
 
-    public void chooseRandomDirection() {
+    public void chooseRandomDirection() { // Изменяем с private на public
         int random = (int) (Math.random() * 4);
         switch (random) {
             case 0:
