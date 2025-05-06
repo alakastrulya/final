@@ -6,19 +6,16 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
 public class MovingBackwardState implements TankState {
     private Tank tank;
-    private float stateTime;
 
     public MovingBackwardState(Tank tank) {
         this.tank = tank;
-        this.stateTime = 0;
     }
 
     @Override
     public void handleInput(int keycode, float stateTime) {
-        this.stateTime = stateTime;
         if (keycode == Input.Keys.UP) {
             tank.moveUp();
-            tank.setDirection(Tank.Direction.BACKWARD); // Устанавливаем направление вверх
+            tank.setDirection(Tank.Direction.BACKWARD);
         } else if (keycode == Input.Keys.DOWN) {
             tank.setState(new MovingForwardState(tank));
         } else if (keycode == Input.Keys.LEFT) {
@@ -33,7 +30,7 @@ public class MovingBackwardState implements TankState {
     }
 
     @Override
-    public TextureRegion getCurrentFrame() {
-        return Assets.movingBackwardAnimation.getKeyFrame(stateTime, true);
+    public TextureRegion getCurrentFrame(float stateTime) {
+        return tank.getMovingBackwardAnimation().getKeyFrame(stateTime, true);
     }
 }

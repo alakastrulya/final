@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -18,9 +17,7 @@ public class GameScreen implements Screen {
     private SpriteBatch batch;
     private float stateTime;
     private Tank player1;
-    private Tank player2; // Добавляем второй танк
-    private Sound startLevelSound;
-    private Sound engineSound;
+    private Tank player2;
 
     public GameScreen(gdxGame game, int playerCount) {
         this.playerCount = playerCount;
@@ -32,22 +29,21 @@ public class GameScreen implements Screen {
 
         // Инициализация первого танка
         player1 = new Tank("yellow", 1);
-        player1.positionX = 50; // Начальная позиция первого танка
+        player1.positionX = 50;
         player1.positionY = 50;
+        Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
-            player2 = new Tank("green", 1); // Второй танк другого цвета
-            player2.positionX = 400; // Начальная позиция второго танка
+            player2 = new Tank("green", 1);
+            player2.positionX = 400;
             player2.positionY = 400;
+            Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
         }
 
         Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
         levelSound.play();
-        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
-        if (player2 != null) {
-            Assets.loadGameAssets(player2.getColour(), player2.getLevel());
-        }
+        Assets.loadLevel(1);
     }
 
     @Override
@@ -60,7 +56,7 @@ public class GameScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        batch.draw(Assets.levelBack, 0, 0, 480, 480); // Рисуем фон
+        batch.draw(Assets.levelBack, 0, 0, 480, 480);
 
         // Рисуем первый танк
         TextureRegion frame1 = player1.getCurrentFrame();
@@ -76,7 +72,6 @@ public class GameScreen implements Screen {
     }
 
     private void checkKeyPress() {
-        // Управление первым танком (стрелки)
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             player1.handleInput(Input.Keys.DOWN, stateTime);
         } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
@@ -91,17 +86,16 @@ public class GameScreen implements Screen {
             player1.handleInput(-1, stateTime);
         }
 
-        // Управление вторым танком (WASD + Enter для стрельбы), если он существует
         if (player2 != null) {
-            if (Gdx.input.isKeyPressed(Input.Keys.S)) { // S - вниз
+            if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                 player2.handleInput(Input.Keys.DOWN, stateTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.W)) { // W - вверх
+            } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
                 player2.handleInput(Input.Keys.UP, stateTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.A)) { // A - влево
+            } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                 player2.handleInput(Input.Keys.LEFT, stateTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.D)) { // D - вправо
+            } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 player2.handleInput(Input.Keys.RIGHT, stateTime);
-            } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) { // Enter - стрельба
+            } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
                 player2.handleInput(Input.Keys.SPACE, stateTime);
             } else {
                 player2.handleInput(-1, stateTime);
@@ -128,8 +122,6 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         batch.dispose();
-        if (startLevelSound != null) startLevelSound.dispose();
-        if (engineSound != null) engineSound.dispose();
     }
 
     @Override
