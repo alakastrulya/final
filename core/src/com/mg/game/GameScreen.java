@@ -21,6 +21,7 @@ public class GameScreen implements Screen {
     private Tank player1;
     private Tank player2;
     private ArrayList<Bullet> bullets;
+    private ArrayList<Tank> enemies;
     private float player1ShootCooldown = 0f;
     private float player2ShootCooldown = 0f;
     private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
@@ -33,19 +34,28 @@ public class GameScreen implements Screen {
         batch = new SpriteBatch();
         stateTime = 0F;
         bullets = new ArrayList<>();
+        enemies = new ArrayList<>();
 
         // Инициализация первого танка
-        player1 = new Tank("yellow", 1);
+        player1 = new Tank("yellow", 1, false);
         player1.positionX = 50;
         player1.positionY = 50;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
-            player2 = new Tank("green", 1);
+            player2 = new Tank("green", 1, false);
             player2.positionX = 400;
             player2.positionY = 400;
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
+        }
+
+        // Инициализация вражеских танков (например, 3 врага)
+        for (int i = 0; i < 3; i++) {
+            Tank enemy = new Tank("red", 1, true); // Предполагаем, что есть текстуры для красных танков
+            enemy.positionX = 100 + i * 150;
+            enemy.positionY = 100 + i * 100;
+            enemies.add(enemy);
         }
 
         Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
@@ -66,6 +76,9 @@ public class GameScreen implements Screen {
             player2ShootCooldown -= delta;
         }
 
+        // Обновляем врагов
+        updateEnemies(delta);
+
         // Обновляем снаряды
         updateBullets(delta);
 
@@ -85,6 +98,12 @@ public class GameScreen implements Screen {
             batch.draw(frame2, player2.positionX, player2.positionY, 26, 26);
         }
 
+        // Рисуем врагов
+        for (Tank enemy : enemies) {
+            TextureRegion enemyFrame = enemy.getCurrentFrame();
+            batch.draw(enemyFrame, enemy.positionX, enemy.positionY, 26, 26);
+        }
+
         // Рисуем снаряды
         for (Bullet bullet : bullets) {
             if (bullet.isActive()) {
@@ -93,6 +112,48 @@ public class GameScreen implements Screen {
         }
 
         batch.end();
+    }
+
+    private void updateEnemies(float delta) {
+        for (Tank enemy : enemies) {
+            // Проверяем столкновение перед движением врага
+            int newX = enemy.positionX;
+            int newY = enemy.positionY;
+
+            switch (enemy.getDirection()) {
+                case FORWARD:
+                    newY = enemy.positionY + 1;
+                    break;
+                case BACKWARD:
+                    newY = enemy.positionY - 1;
+                    break;
+                case LEFT:
+                    newX = enemy.positionX - 1;
+                    break;
+                case RIGHT:
+                    newX = enemy.positionX + 1;
+                    break;
+            }
+
+            boolean canMove = true;
+            if (newY >= 0 && newY <= 454 && newX >= 0 && newX <= 454) {
+                if (wouldCollide(enemy, newY, newX)) {
+                    canMove = false;
+                }
+            } else {
+                canMove = false;
+            }
+
+            // Если враг может двигаться, обновляем его состояние
+            if (canMove) {
+                Bullet bullet = enemy.updateEnemy(delta, player1, player2);
+                if (bullet != null) {
+                    bullets.add(bullet);
+                }
+            } else {
+                enemy.chooseRandomDirection(); // Если столкновение, меняем направление
+            }
+        }
     }
 
     private void updateBullets(float delta) {
@@ -191,9 +252,27 @@ public class GameScreen implements Screen {
         tank.positionX = (int) newX;
         tank.positionY = (int) newY;
 
-        // Проверяем столкновение
+        // Проверяем столкновение с игроками
         boolean collides = (tank == player1 && player2 != null && tank.collidesWith(player2)) ||
                 (tank == player2 && tank.collidesWith(player1));
+
+        // Проверяем столкновение с врагами
+        for (Tank enemy : enemies) {
+            if (tank != enemy && tank.collidesWith(enemy)) {
+                collides = true;
+                break;
+            }
+        }
+
+        // Если танк — враг, проверяем столкновение с другими врагами
+        if (tank.isEnemy()) {
+            for (Tank otherEnemy : enemies) {
+                if (tank != otherEnemy && tank.collidesWith(otherEnemy)) {
+                    collides = true;
+                    break;
+                }
+            }
+        }
 
         // Восстанавливаем старые координаты
         tank.positionX = (int) oldX;

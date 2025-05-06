@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 
 public class Tank {
     private String colour;
@@ -16,6 +17,11 @@ public class Tank {
     public int positionY;
     private TankState currentState;
     private Direction direction;
+    private boolean isEnemy;
+    private float timeSinceLastMove;
+    private float timeSinceLastShot;
+    private static final float MOVE_INTERVAL = 1f; // Интервал смены направления (сек)
+    private static final float SHOOT_INTERVAL = 2f; // Интервал стрельбы для врагов (сек)
 
     // Анимации для каждого танка (оставляем private)
     private Animation<TextureRegion> movingForwardAnimation;
@@ -32,14 +38,17 @@ public class Tank {
         FORWARD, BACKWARD, LEFT, RIGHT
     }
 
-    public Tank(String colour, int level) {
+    public Tank(String colour, int level, boolean isEnemy) {
         this.colour = colour;
         this.level = level;
+        this.isEnemy = isEnemy;
         this.positionX = 0;
         this.positionY = 0;
         this.currentState = new StandingByState(this);
         this.direction = Direction.FORWARD;
         this.stateTime = 0;
+        this.timeSinceLastMove = 0;
+        this.timeSinceLastShot = 0;
         loadAnimations();
     }
 
@@ -89,6 +98,88 @@ public class Tank {
     public void handleInput(int keycode, float stateTime) {
         this.stateTime = stateTime;
         currentState.handleInput(keycode, stateTime);
+    }
+
+    public Bullet updateEnemy(float delta, Tank player1, Tank player2) {
+        if (!isEnemy) return null;
+
+        timeSinceLastMove += delta;
+        timeSinceLastShot += delta;
+
+        // Смена направления каждые MOVE_INTERVAL секунд
+        if (timeSinceLastMove >= MOVE_INTERVAL) {
+            chooseRandomDirection();
+            timeSinceLastMove = 0;
+        }
+
+        // Движение в текущем направлении
+        switch (direction) {
+            case FORWARD:
+                handleInput(com.badlogic.gdx.Input.Keys.DOWN, stateTime);
+                break;
+            case BACKWARD:
+                handleInput(com.badlogic.gdx.Input.Keys.UP, stateTime);
+                break;
+            case LEFT:
+                handleInput(com.badlogic.gdx.Input.Keys.LEFT, stateTime);
+                break;
+            case RIGHT:
+                handleInput(com.badlogic.gdx.Input.Keys.RIGHT, stateTime);
+                break;
+        }
+
+        // Стрельба в сторону ближайшего игрока
+        if (timeSinceLastShot >= SHOOT_INTERVAL) {
+            Tank target = findNearestPlayer(player1, player2);
+            if (target != null) {
+                // Определяем направление к игроку
+                direction = getDirectionToTarget(target);
+                handleInput(com.badlogic.gdx.Input.Keys.SPACE, stateTime);
+                timeSinceLastShot = 0;
+                return shoot();
+            }
+        }
+        return null;
+    }
+
+    public void chooseRandomDirection() {
+        int random = (int) (Math.random() * 4);
+        switch (random) {
+            case 0:
+                direction = Direction.FORWARD;
+                break;
+            case 1:
+                direction = Direction.BACKWARD;
+                break;
+            case 2:
+                direction = Direction.LEFT;
+                break;
+            case 3:
+                direction = Direction.RIGHT;
+                break;
+        }
+    }
+
+    private Tank findNearestPlayer(Tank player1, Tank player2) {
+        Vector2 myPos = new Vector2(positionX, positionY);
+        Vector2 player1Pos = new Vector2(player1.positionX, player1.positionY);
+        Vector2 player2Pos = player2 != null ? new Vector2(player2.positionX, player2.positionY) : null;
+
+        float distToPlayer1 = myPos.dst(player1Pos);
+        float distToPlayer2 = player2Pos != null ? myPos.dst(player2Pos) : Float.MAX_VALUE;
+
+        return distToPlayer1 <= distToPlayer2 ? player1 : player2;
+    }
+
+    private Direction getDirectionToTarget(Tank target) {
+        float dx = target.positionX - positionX;
+        float dy = target.positionY - positionY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            return dx > 0 ? Direction.RIGHT : Direction.LEFT;
+        } else {
+            return dy > 0 ? Direction.FORWARD : Direction.BACKWARD;
+        }
     }
 
     public void setState(TankState state) {
@@ -152,6 +243,10 @@ public class Tank {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+
+    public boolean isEnemy() {
+        return isEnemy;
     }
 
     // Геттеры для анимаций
