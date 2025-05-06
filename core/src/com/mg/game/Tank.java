@@ -123,8 +123,11 @@ public class Tank {
         }
     }
 
-    public void shoot() {
-        // Логика стрельбы
+    public Bullet shoot() {
+        // Снаряд появляется в центре танка
+        float bulletX = positionX + 13; // 26/2
+        float bulletY = positionY + 13; // 26/2
+        return new Bullet(bulletX, bulletY, direction, colour);
     }
 
     public String getColour() {

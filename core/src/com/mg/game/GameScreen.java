@@ -8,6 +8,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class GameScreen implements Screen {
 
@@ -18,6 +20,10 @@ public class GameScreen implements Screen {
     private float stateTime;
     private Tank player1;
     private Tank player2;
+    private ArrayList<Bullet> bullets;
+    private float player1ShootCooldown = 0f;
+    private float player2ShootCooldown = 0f;
+    private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
 
     public GameScreen(gdxGame game, int playerCount) {
         this.playerCount = playerCount;
@@ -26,6 +32,7 @@ public class GameScreen implements Screen {
         camera.setToOrtho(true, 640, 480);
         batch = new SpriteBatch();
         stateTime = 0F;
+        bullets = new ArrayList<>();
 
         // Инициализация первого танка
         player1 = new Tank("yellow", 1);
@@ -52,6 +59,16 @@ public class GameScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
+
+        // Обновляем кулдауны
+        player1ShootCooldown -= delta;
+        if (player2 != null) {
+            player2ShootCooldown -= delta;
+        }
+
+        // Обновляем снаряды
+        updateBullets(delta);
+
         checkKeyPress();
 
         batch.setProjectionMatrix(camera.combined);
@@ -68,15 +85,33 @@ public class GameScreen implements Screen {
             batch.draw(frame2, player2.positionX, player2.positionY, 26, 26);
         }
 
+        // Рисуем снаряды
+        for (Bullet bullet : bullets) {
+            if (bullet.isActive()) {
+                batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
+            }
+        }
+
         batch.end();
     }
 
+    private void updateBullets(float delta) {
+        Iterator<Bullet> iterator = bullets.iterator();
+        while (iterator.hasNext()) {
+            Bullet bullet = iterator.next();
+            bullet.update(delta);
+            if (!bullet.isActive()) {
+                bullet.dispose();
+                iterator.remove();
+            }
+        }
+    }
+
     private void checkKeyPress() {
-        // Управление первым танком (стрелки)
+        // Управление первым танком (стрелки + Space для стрельбы)
         int keycode1 = -1;
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             keycode1 = Input.Keys.DOWN;
-            // Проверяем столкновение перед движением
             int newY = player1.positionY + 1;
             if (newY <= 454 && !wouldCollide(player1, newY, player1.positionX)) {
                 player1.handleInput(keycode1, stateTime);
@@ -99,9 +134,11 @@ public class GameScreen implements Screen {
             if (newX <= 454 && !wouldCollide(player1, player1.positionY, newX)) {
                 player1.handleInput(keycode1, stateTime);
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && player1ShootCooldown <= 0) {
             keycode1 = Input.Keys.SPACE;
             player1.handleInput(keycode1, stateTime);
+            bullets.add(player1.shoot());
+            player1ShootCooldown = SHOOT_COOLDOWN;
         } else {
             player1.handleInput(-1, stateTime);
         }
@@ -133,9 +170,11 @@ public class GameScreen implements Screen {
                 if (newX <= 454 && !wouldCollide(player2, player2.positionY, newX)) {
                     player2.handleInput(keycode2, stateTime);
                 }
-            } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
+            } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER) && player2ShootCooldown <= 0) {
                 keycode2 = Input.Keys.SPACE;
                 player2.handleInput(keycode2, stateTime);
+                bullets.add(player2.shoot());
+                player2ShootCooldown = SHOOT_COOLDOWN;
             } else {
                 player2.handleInput(-1, stateTime);
             }
@@ -182,6 +221,9 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         batch.dispose();
+        for (Bullet bullet : bullets) {
+            bullet.dispose();
+        }
     }
 
     @Override
