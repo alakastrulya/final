@@ -5,6 +5,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 
 public class Tank {
     private String colour;
@@ -181,5 +182,16 @@ public class Tank {
 
     public Animation<TextureRegion> getStandByRightAnimation() {
         return standByRightAnimation;
+    }
+
+    // Метод для получения границ танка
+    public Rectangle getBounds() {
+        return new Rectangle(positionX, positionY, 26, 26);
+    }
+
+    // Проверка столкновения с другим танком
+    public boolean collidesWith(Tank other) {
+        if (other == null) return false;
+        return getBounds().overlaps(other.getBounds());
     }
 }

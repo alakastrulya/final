@@ -72,35 +72,95 @@ public class GameScreen implements Screen {
     }
 
     private void checkKeyPress() {
+        // Управление первым танком (стрелки)
+        int keycode1 = -1;
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            player1.handleInput(Input.Keys.DOWN, stateTime);
+            keycode1 = Input.Keys.DOWN;
+            // Проверяем столкновение перед движением
+            int newY = player1.positionY + 1;
+            if (newY <= 454 && !wouldCollide(player1, newY, player1.positionX)) {
+                player1.handleInput(keycode1, stateTime);
+            }
         } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            player1.handleInput(Input.Keys.UP, stateTime);
+            keycode1 = Input.Keys.UP;
+            int newY = player1.positionY - 1;
+            if (newY >= 0 && !wouldCollide(player1, newY, player1.positionX)) {
+                player1.handleInput(keycode1, stateTime);
+            }
         } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player1.handleInput(Input.Keys.LEFT, stateTime);
+            keycode1 = Input.Keys.LEFT;
+            int newX = player1.positionX - 1;
+            if (newX >= 0 && !wouldCollide(player1, player1.positionY, newX)) {
+                player1.handleInput(keycode1, stateTime);
+            }
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player1.handleInput(Input.Keys.RIGHT, stateTime);
+            keycode1 = Input.Keys.RIGHT;
+            int newX = player1.positionX + 1;
+            if (newX <= 454 && !wouldCollide(player1, player1.positionY, newX)) {
+                player1.handleInput(keycode1, stateTime);
+            }
         } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            player1.handleInput(Input.Keys.SPACE, stateTime);
+            keycode1 = Input.Keys.SPACE;
+            player1.handleInput(keycode1, stateTime);
         } else {
             player1.handleInput(-1, stateTime);
         }
 
+        // Управление вторым танком (WASD + Enter для стрельбы), если он существует
         if (player2 != null) {
+            int keycode2 = -1;
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                player2.handleInput(Input.Keys.DOWN, stateTime);
+                keycode2 = Input.Keys.DOWN;
+                int newY = player2.positionY + 1;
+                if (newY <= 454 && !wouldCollide(player2, newY, player2.positionX)) {
+                    player2.handleInput(keycode2, stateTime);
+                }
             } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-                player2.handleInput(Input.Keys.UP, stateTime);
+                keycode2 = Input.Keys.UP;
+                int newY = player2.positionY - 1;
+                if (newY >= 0 && !wouldCollide(player2, newY, player2.positionX)) {
+                    player2.handleInput(keycode2, stateTime);
+                }
             } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                player2.handleInput(Input.Keys.LEFT, stateTime);
+                keycode2 = Input.Keys.LEFT;
+                int newX = player2.positionX - 1;
+                if (newX >= 0 && !wouldCollide(player2, player2.positionY, newX)) {
+                    player2.handleInput(keycode2, stateTime);
+                }
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                player2.handleInput(Input.Keys.RIGHT, stateTime);
+                keycode2 = Input.Keys.RIGHT;
+                int newX = player2.positionX + 1;
+                if (newX <= 454 && !wouldCollide(player2, player2.positionY, newX)) {
+                    player2.handleInput(keycode2, stateTime);
+                }
             } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
-                player2.handleInput(Input.Keys.SPACE, stateTime);
+                keycode2 = Input.Keys.SPACE;
+                player2.handleInput(keycode2, stateTime);
             } else {
                 player2.handleInput(-1, stateTime);
             }
         }
+    }
+
+    // Метод для проверки столкновения при предполагаемом новом положении
+    private boolean wouldCollide(Tank tank, float newY, float newX) {
+        // Сохраняем текущие координаты
+        float oldX = tank.positionX;
+        float oldY = tank.positionY;
+
+        // Устанавливаем новые координаты для проверки
+        tank.positionX = (int) newX;
+        tank.positionY = (int) newY;
+
+        // Проверяем столкновение
+        boolean collides = (tank == player1 && player2 != null && tank.collidesWith(player2)) ||
+                (tank == player2 && tank.collidesWith(player1));
+
+        // Восстанавливаем старые координаты
+        tank.positionX = (int) oldX;
+        tank.positionY = (int) oldY;
+
+        return collides;
     }
 
     @Override
