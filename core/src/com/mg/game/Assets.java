@@ -29,6 +29,8 @@ public class Assets {
     public static Animation<TextureRegion> movingRightAnimation;
     public static Animation<TextureRegion> standByRightAnimation;
 
+    public static Texture tileSet; // новый tileset
+
     public static float elapsedTime;
     public static String colour;
     public static int level;
@@ -51,7 +53,7 @@ public class Assets {
     }
 
     public static void loadGameAssets(String colour, int level) {
-        loadLevel(1);
+        loadLevel(level);
         loadTankAnimations(colour, level);
         loadSounds();
     }
@@ -103,5 +105,8 @@ public class Assets {
         Texture levelBase = new Texture(Gdx.files.internal("sprites/levels/levelBase.png"));
         levelBase.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         levelBack = new Sprite(levelBase);
+
+        // Загружаем tileset для карты
+        tileSet = new Texture(Gdx.files.internal("sprites/tiles/tileset.png")); // здесь файл tileset.png
     }
 }
