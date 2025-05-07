@@ -101,15 +101,15 @@ public class GameScreen implements Screen {
         // Инициализация первого танка
         // Используем конструктор из первого кода, так как он поддерживает isEnemy
         player1 = new Tank("yellow", 1, false);
-        player1.positionX = 50;
-        player1.positionY = 50;
+        player1.positionX = 160;
+        player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
             player2 = new Tank("green", 1, false);
-            player2.positionX = 400;
-            player2.positionY = 400;
+            player2.positionX = 290;
+            player2.positionY = 450;
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
         }
 
@@ -502,61 +502,37 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             keycode1 = Input.Keys.DOWN;
             int newY = player1.positionY + 1;
-            if (newY <= 454 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX)) {
-                try {
-                    player1.handleInput(keycode1, stateTime);
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
-                }
+            if (newY <= 454 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX) && !checkMapCollision(player1.positionX, newY, player1)) {
+                player1.handleInput(keycode1, stateTime);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             keycode1 = Input.Keys.UP;
             int newY = player1.positionY - 1;
-            if (newY >= 0 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX)) {
-                try {
-                    player1.handleInput(keycode1, stateTime);
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
-                }
+            if (newY >= 0 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX) && !checkMapCollision(player1.positionX, newY, player1)) {
+                player1.handleInput(keycode1, stateTime);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             keycode1 = Input.Keys.LEFT;
             int newX = player1.positionX - 1;
-            if (newX >= 0 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX)) {
-                try {
-                    player1.handleInput(keycode1, stateTime);
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
-                }
+            if (newX >= 0 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
+                player1.handleInput(keycode1, stateTime);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             keycode1 = Input.Keys.RIGHT;
             int newX = player1.positionX + 1;
-            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX)) {
-                try {
-                    player1.handleInput(keycode1, stateTime);
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
-                }
+            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
+                player1.handleInput(keycode1, stateTime);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && player1ShootCooldown <= 0) {
             keycode1 = Input.Keys.SPACE;
-            try {
-                player1.handleInput(keycode1, stateTime);
-                Bullet bullet = player1.shoot();
-                if (bullet != null) {
-                    bullets.add(bullet);
-                    player1ShootCooldown = SHOOT_COOLDOWN;
-                }
-            } catch (Exception e) {
-                Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
+            player1.handleInput(keycode1, stateTime);
+            Bullet bullet = player1.shoot();
+            if (bullet != null) {
+                bullets.add(bullet);
+                player1ShootCooldown = SHOOT_COOLDOWN;
             }
         } else {
-            try {
-                player1.handleInput(-1, stateTime);
-            } catch (Exception e) {
-                Gdx.app.error("GameScreen", "Error handling input for player1: " + e.getMessage());
-            }
+            player1.handleInput(-1, stateTime);
         }
 
         if (player2 != null && player2.isAlive()) {
@@ -564,62 +540,51 @@ public class GameScreen implements Screen {
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                 keycode2 = Input.Keys.DOWN;
                 int newY = player2.positionY + 1;
-                if (newY <= 454 && !checkPlayerTankCollision(player2, newY, player2.positionX) && !checkPlayerEnemyCollision(player2, newY, player2.positionX)) {
-                    try {
-                        player2.handleInput(keycode2, stateTime);
-                    } catch (Exception e) {
-                        Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
-                    }
+                if (newY <= 454
+                        && !checkPlayerTankCollision(player2, newY, player2.positionX)
+                        && !checkPlayerEnemyCollision(player2, newY, player2.positionX)
+                        && !checkMapCollision(player2.positionX, newY, player2)) {
+                    player2.handleInput(keycode2, stateTime);
                 }
             } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
                 keycode2 = Input.Keys.UP;
                 int newY = player2.positionY - 1;
-                if (newY >= 0 && !checkPlayerTankCollision(player2, newY, player2.positionX) && !checkPlayerEnemyCollision(player2, newY, player2.positionX)) {
-                    try {
-                        player2.handleInput(keycode2, stateTime);
-                    } catch (Exception e) {
-                        Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
-                    }
+                if (newY >= 0
+                        && !checkPlayerTankCollision(player2, newY, player2.positionX)
+                        && !checkPlayerEnemyCollision(player2, newY, player2.positionX)
+                        && !checkMapCollision(player2.positionX, newY, player2)) {
+                    player2.handleInput(keycode2, stateTime);
                 }
             } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                 keycode2 = Input.Keys.LEFT;
                 int newX = player2.positionX - 1;
-                if (newX >= 0 && !checkPlayerTankCollision(player2, player2.positionY, newX) && !checkPlayerEnemyCollision(player2, player2.positionY, newX)) {
-                    try {
-                        player2.handleInput(keycode2, stateTime);
-                    } catch (Exception e) {
-                        Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
-                    }
+                if (newX >= 0
+                        && !checkPlayerTankCollision(player2, player2.positionY, newX)
+                        && !checkPlayerEnemyCollision(player2, player2.positionY, newX)
+                        && !checkMapCollision(newX, player2.positionY, player2)) {
+                    player2.handleInput(keycode2, stateTime);
                 }
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 keycode2 = Input.Keys.RIGHT;
                 int newX = player2.positionX + 1;
-                if (newX <= 454 && !checkPlayerTankCollision(player2, player2.positionY, newX) && !checkPlayerEnemyCollision(player2, player2.positionY, newX)) {
-                    try {
-                        player2.handleInput(keycode2, stateTime);
-                    } catch (Exception e) {
-                        Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
-                    }
+                if (newX <= 454
+                        && !checkPlayerTankCollision(player2, player2.positionY, newX)
+                        && !checkPlayerEnemyCollision(player2, player2.positionY, newX)
+                        && !checkMapCollision(newX, player2.positionY, player2)) {
+                    player2.handleInput(keycode2, stateTime);
                 }
             } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER) && player2ShootCooldown <= 0) {
                 keycode2 = Input.Keys.SPACE;
-                try {
-                    player2.handleInput(keycode2, stateTime);
-                    Bullet bullet = player2.shoot();
-                    if (bullet != null) {
-                        bullets.add(bullet);
-                        player2ShootCooldown = SHOOT_COOLDOWN;
-                    }
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
+                player2.handleInput(keycode2, stateTime);
+                Bullet bullet = player2.shoot();
+                if (bullet != null) {
+                    bullets.add(bullet);
+                    player2ShootCooldown = SHOOT_COOLDOWN;
                 }
             } else {
-                try {
-                    player2.handleInput(-1, stateTime);
-                } catch (Exception e) {
-                    Gdx.app.error("GameScreen", "Error handling input for player2: " + e.getMessage());
-                }
+                player2.handleInput(-1, stateTime);
             }
+
         }
     }
 
@@ -667,6 +632,19 @@ public class GameScreen implements Screen {
         tank.positionY = (int) oldY;
 
         return collides;
+    }
+
+    private boolean checkMapCollision(float newX, float newY, Tank tank) {
+        Rectangle tankRect = new Rectangle(newX, newY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+        for (MapTile tile : mapLoader.tiles) {
+            if (tile.isSolid) {
+                Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
+                if (tankRect.overlaps(tileRect)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean checkEnemyCollision(Tank tank, float newY, float newX) {

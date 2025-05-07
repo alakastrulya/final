@@ -60,7 +60,8 @@ public class MapLoader {
                     continue;
                 }
 
-                tiles.add(new MapTile(all[tileRow][tileCol], mapCol, mapRow));
+                boolean isSolid = (tileRow == 0 && tileCol == 0); // кирпич = solid, остальные — нет
+                tiles.add(new MapTile(all[tileRow][tileCol], mapCol, mapRow, isSolid));
 
             } catch (NumberFormatException ex) {
                 Gdx.app.error("MapLoader", "Ошибка разбора числа в строке " + (i + 1) + ": " + line);

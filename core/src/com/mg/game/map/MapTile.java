@@ -6,20 +6,28 @@ import com.badlogic.gdx.math.Rectangle;
 public class MapTile {
     public final TextureRegion region;
     public final int x, y;
+    public boolean isSolid;
 
-    public MapTile(TextureRegion region, int x, int y) {
+    public MapTile(TextureRegion region, int x, int y, boolean isSolid) {
         this.region = region;
         this.x = x;
         this.y = y;
+        this.isSolid = isSolid;
     }
 
-    public Rectangle getBounds(int tileSize) {
-        return new Rectangle(x * tileSize, y * tileSize, tileSize, tileSize);
+    public MapTile(TextureRegion region, int x, int y) {
+        this(region, x, y, false); // по умолчанию — не solid
+    }
+
+    public Rectangle getBounds(int tileSize, float scale, int offsetX, int offsetY) {
+        float scaledSize = tileSize / scale;
+        float drawX = x * scaledSize + offsetX;
+        float drawY = y * scaledSize + offsetY;
+        return new Rectangle(drawX, drawY, scaledSize, scaledSize);
     }
 
     public int getFlippedY(int screenHeight, int tileSize) {
         int totalTilesY = screenHeight / tileSize;
         return totalTilesY - y - 1;
     }
-
 }
