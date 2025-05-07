@@ -43,9 +43,7 @@ public class MapLoader {
 
             String[] parts = line.split(",");
             if (parts.length != 4) {
-                Gdx.app.error("MapLoader",
-                        "Неправильная строка в " + mapPath +
-                                " на строке " + (i+1) + ": " + line);
+                Gdx.app.error("MapLoader", "Неправильная строка в " + mapPath + " на строке " + (i + 1) + ": " + line);
                 continue;
             }
 
@@ -60,8 +58,21 @@ public class MapLoader {
                     continue;
                 }
 
-                boolean isSolid = (tileRow == 0 && tileCol == 0); // кирпич = solid, остальные — нет
-                tiles.add(new MapTile(all[tileRow][tileCol], mapCol, mapRow, isSolid));
+                TextureRegion region = all[tileRow][tileCol];
+
+                boolean isSolid = false;
+                boolean isDestructible = true;
+
+                // === Настрой тайлы вручную ===
+                if (tileRow == 0 && tileCol == 0) { // кирпич
+                    isSolid = true;
+                    isDestructible = true;
+                } else if (tileRow == 1 && tileCol == 0) { // стальная стена (неразрушаемая)
+                    isSolid = true;
+                    isDestructible = false;
+                }
+
+                tiles.add(new MapTile(region, mapCol, mapRow, isSolid, isDestructible));
 
             } catch (NumberFormatException ex) {
                 Gdx.app.error("MapLoader", "Ошибка разбора числа в строке " + (i + 1) + ": " + line);
