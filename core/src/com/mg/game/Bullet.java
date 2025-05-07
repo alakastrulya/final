@@ -1,62 +1,72 @@
 package com.mg.game;
 
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Bullet {
     private float positionX;
     private float positionY;
     private Tank.Direction direction;
-    private float speed = 5f;
-    private TextureRegion texture;
+    private Texture texture;
     private boolean active;
+    private boolean fromEnemy;
+    private static final float SPEED = 5.0f; // Скорость снаряда
 
     public Bullet(float startX, float startY, Tank.Direction direction, String tankColour) {
+        this(startX, startY, direction, tankColour, false);
+    }
+
+    public Bullet(float startX, float startY, Tank.Direction direction, String tankColour, boolean fromEnemy) {
         this.positionX = startX;
         this.positionY = startY;
         this.direction = direction;
         this.active = true;
+        this.fromEnemy = fromEnemy;
 
         // Создаём текстуру для снаряда (маленький прямоугольник)
         Pixmap pixmap = new Pixmap(4, 4, Pixmap.Format.RGBA8888);
         if (tankColour.equals("yellow")) {
-            pixmap.setColor(Color.YELLOW);
+            pixmap.setColor(1, 1, 0, 1); // Желтый цвет
         } else if (tankColour.equals("green")) {
-            pixmap.setColor(Color.GREEN);
+            pixmap.setColor(0, 1, 0, 1); // Зеленый цвет
+        } else if (tankColour.equals("red")) {
+            pixmap.setColor(1, 0, 0, 1); // Красный цвет
         } else {
-            pixmap.setColor(Color.WHITE);
+            pixmap.setColor(1, 1, 1, 1); // Белый цвет по умолчанию
         }
-        pixmap.fill();
-        this.texture = new TextureRegion(new Texture(pixmap));
+        pixmap.fillRectangle(0, 0, 4, 4);
+        texture = new Texture(pixmap);
         pixmap.dispose();
     }
 
     public void update(float delta) {
-        if (!active) return;
-
-        // Двигаем снаряд в зависимости от направления
+        // Обновляем позицию снаряда в зависимости от направления
         switch (direction) {
             case FORWARD:
-                positionY += speed;
+                positionY += SPEED;
                 break;
             case BACKWARD:
-                positionY -= speed;
+                positionY -= SPEED;
                 break;
             case LEFT:
-                positionX -= speed;
+                positionX -= SPEED;
                 break;
             case RIGHT:
-                positionX += speed;
+                positionX += SPEED;
                 break;
         }
 
-        // Если снаряд вышел за пределы экрана, деактивируем его
-        if (positionX < 0 || positionX > 480 || positionY < 0 || positionY > 480) {
+        // Проверяем, не вышел ли снаряд за пределы экрана
+        if (positionX < 0 || positionX > Gdx.graphics.getWidth() ||
+                positionY < 0 || positionY > Gdx.graphics.getHeight()) {
             active = false;
         }
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle(positionX, positionY, 4, 4);
     }
 
     public float getPositionX() {
@@ -67,7 +77,7 @@ public class Bullet {
         return positionY;
     }
 
-    public TextureRegion getTexture() {
+    public Texture getTexture() {
         return texture;
     }
 
@@ -75,11 +85,17 @@ public class Bullet {
         return active;
     }
 
-    public void dispose() {
-        texture.getTexture().dispose();
+    public void deactivate() {
+        active = false;
     }
 
-    public Rectangle getBounds() {
-        return new Rectangle(positionX, positionY, 4, 4);
+    public boolean isFromEnemy() {
+        return fromEnemy;
+    }
+
+    public void dispose() {
+        if (texture != null) {
+            texture.dispose();
+        }
     }
 }

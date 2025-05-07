@@ -1,134 +1,146 @@
 package com.mg.game;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
+
+import java.util.Random;
 
 public class Tank {
-    private String colour;
-    private int level;
-    public static Sound levelBeginSound;
-
-    public int positionX;
-    public int positionY;
-    private TankState currentState;
-    private Direction direction;
-    private boolean isEnemy;
-    private float timeSinceLastMove;
-    private float timeSinceLastShot;
-    private static final float MOVE_INTERVAL = 3f; // Увеличиваем интервал до 3 секунд для более медленного движения врагов
-    private static final float SHOOT_INTERVAL = 2f; // Интервал стрельбы для врагов (сек)
-
-    // Анимации для каждого танка (оставляем private)
-    private Animation<TextureRegion> movingForwardAnimation;
-    private Animation<TextureRegion> standByForwardAnimation;
-    private Animation<TextureRegion> movingBackwardAnimation;
-    private Animation<TextureRegion> standByBackwardAnimation;
-    private Animation<TextureRegion> movingLeftAnimation;
-    private Animation<TextureRegion> standByLeftAnimation;
-    private Animation<TextureRegion> movingRightAnimation;
-    private Animation<TextureRegion> standByRightAnimation;
-    private float stateTime;
-
+    // Перечисление для направлений
     public enum Direction {
         FORWARD, BACKWARD, LEFT, RIGHT
     }
+
+    private String colour;
+    private int level;
+    private boolean isEnemy;
+    private Direction direction;
+    private boolean isMoving;
+    private TextureRegion currentFrame;
+    private float stateTime;
+    private Random random;
+    private float shootTimer;
+    private static final float SHOOT_DELAY = 2.0f; // Задержка между выстрелами врага
+
+    // Переменные для здоровья и неуязвимости
+    private int health;
+    private float invulnerabilityTimer;
+    private static final float INVULNERABILITY_TIME = 2.0f; // секунды
+
+    public int positionX;
+    public int positionY;
+
+    // Поле для текущего состояния
+    private TankState currentState;
 
     public Tank(String colour, int level, boolean isEnemy) {
         this.colour = colour;
         this.level = level;
         this.isEnemy = isEnemy;
-        this.positionX = 0;
-        this.positionY = 0;
-        this.currentState = new StandingByState(this);
-        this.direction = Direction.FORWARD;
-        this.stateTime = 0;
-        this.timeSinceLastMove = 0;
-        this.timeSinceLastShot = 0;
-        loadAnimations();
-    }
+        this.direction = Direction.FORWARD; // По умолчанию смотрит вперед
+        this.isMoving = false;
+        this.random = new Random();
+        this.shootTimer = 0;
 
-    private void loadAnimations() {
+        // Инициализация здоровья
+        this.health = isEnemy ? 1 : 3; // Враги умирают с одного выстрела, игроки с трех
+        this.invulnerabilityTimer = 0;
+
+        // Если это враг, выбираем случайное направление
+        if (isEnemy) {
+            chooseRandomDirection();
+        }
+
+        // Устанавливаем начальное состояние
         try {
-            Texture right1 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/right1.png"));
-            Texture right2 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/right2.png"));
-            Texture left1 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/left1.png"));
-            Texture left2 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/left2.png"));
-            Texture backward1 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/down1.png"));
-            Texture backward2 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/down2.png"));
-            Texture forward1 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/up1.png"));
-            Texture forward2 = new Texture(Gdx.files.internal("sprites/tanks/" + colour + "/level_" + level + "/up2.png"));
-
-            TextureRegion[] movingForwardSheetFrames = new TextureRegion[2];
-            TextureRegion standByForwardFrame = new TextureRegion(forward1, 0, 0, 13, 13);
-            movingForwardSheetFrames[0] = new TextureRegion(forward1, 0, 0, 13, 13);
-            movingForwardSheetFrames[1] = new TextureRegion(forward2, 0, 0, 13, 13);
-            movingForwardAnimation = new Animation<>(0.1F, movingForwardSheetFrames);
-            standByForwardAnimation = new Animation<>(0.1F, standByForwardFrame);
-
-            TextureRegion[] movingBackwardSheetFrames = new TextureRegion[2];
-            TextureRegion standByBackwardFrame = new TextureRegion(backward1, 0, 0, 13, 13);
-            movingBackwardSheetFrames[0] = new TextureRegion(backward1, 0, 0, 13, 13);
-            movingBackwardSheetFrames[1] = new TextureRegion(backward2, 0, 0, 13, 13);
-            movingBackwardAnimation = new Animation<>(0.1F, movingBackwardSheetFrames);
-            standByBackwardAnimation = new Animation<>(0.1F, standByBackwardFrame);
-
-            TextureRegion[] movingLeftSheetFrames = new TextureRegion[2];
-            TextureRegion standByLeftFrame = new TextureRegion(left1, 0, 0, 13, 13);
-            movingLeftSheetFrames[0] = new TextureRegion(left1, 0, 0, 13, 13);
-            movingLeftSheetFrames[1] = new TextureRegion(left2, 0, 0, 13, 13);
-            movingLeftAnimation = new Animation<>(0.1F, movingLeftSheetFrames);
-            standByLeftAnimation = new Animation<>(0.1F, standByLeftFrame);
-
-            TextureRegion[] movingRightSheetFrames = new TextureRegion[2];
-            TextureRegion standByRightFrame = new TextureRegion(right1, 0, 0, 13, 13);
-            movingRightSheetFrames[0] = new TextureRegion(right1, 0, 0, 13, 13);
-            movingRightSheetFrames[1] = new TextureRegion(right2, 0, 0, 13, 13);
-            movingRightAnimation = new Animation<>(0.1F, movingRightSheetFrames);
-            standByRightAnimation = new Animation<>(0.1F, standByRightFrame);
+            this.currentState = new StandingByState(this);
         } catch (Exception e) {
-            Gdx.app.error("Tank", "Error loading animations for " + colour + ": " + e.getMessage());
+            Gdx.app.error("Tank", "Failed to initialize StandingByState: " + e.getMessage());
+            this.currentState = null; // Устанавливаем null как запасной вариант
         }
     }
 
     public void handleInput(int keycode, float stateTime) {
         this.stateTime = stateTime;
-        currentState.handleInput(keycode, stateTime);
+        if (currentState != null) {
+            try {
+                currentState.handleInput(keycode, stateTime);
+            } catch (Exception e) {
+                Gdx.app.error("Tank", "Error handling input: " + e.getMessage());
+            }
+        }
+        // Обновляем текущий кадр через состояние или по умолчанию
+        currentFrame = getCurrentFrame();
+    }
+
+    public void moveUp() {
+        positionY--;
+    }
+
+    public void moveDown() {
+        positionY++;
+    }
+
+    public void moveLeft() {
+        positionX--;
+    }
+
+    public void moveRight() {
+        positionX++;
+    }
+
+    public Bullet shoot() {
+        // Создаем снаряд в зависимости от направления танка
+        float bulletX = positionX;
+        float bulletY = positionY;
+
+        // Корректируем начальную позицию снаряда в зависимости от направления
+        switch (direction) {
+            case FORWARD:
+                bulletX += 13; // Центр танка по X
+                bulletY += 26; // Перед танка по Y
+                break;
+            case BACKWARD:
+                bulletX += 13; // Центр танка по X
+                bulletY -= 4; // За танком по Y
+                break;
+            case LEFT:
+                bulletX -= 4; // Слева от танка по X
+                bulletY += 13; // Центр танка по Y
+                break;
+            case RIGHT:
+                bulletX += 26; // Справа от танка по X
+                bulletY += 13; // Центр танка по Y
+                break;
+        }
+
+        return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
     }
 
     public Bullet updateEnemy(float delta, Tank player1, Tank player2) {
-        if (!isEnemy) return null;
+        // Обновляем таймер стрельбы
+        shootTimer -= delta;
 
-        timeSinceLastMove += delta;
-        timeSinceLastShot += delta;
-
-        // Смена направления каждые MOVE_INTERVAL секунд
-        if (timeSinceLastMove >= MOVE_INTERVAL) {
+        // Случайно меняем направление (с небольшой вероятностью)
+        if (random.nextFloat() < 0.01) {
             chooseRandomDirection();
-            timeSinceLastMove = 0;
         }
 
-        // Стрельба в сторону ближайшего игрока
-        if (timeSinceLastShot >= SHOOT_INTERVAL) {
-            Tank target = findNearestPlayer(player1, player2);
-            if (target != null) {
-                // Определяем направление к игроку
-                direction = getDirectionToTarget(target);
-                handleInput(com.badlogic.gdx.Input.Keys.SPACE, stateTime);
-                timeSinceLastShot = 0;
-                return shoot();
-            }
+        // Стреляем, если прошло достаточно времени
+        if (shootTimer <= 0) {
+            shootTimer = SHOOT_DELAY;
+            return shoot();
         }
+
         return null;
     }
 
-    public void chooseRandomDirection() { // Изменяем с private на public
-        int random = (int) (Math.random() * 4);
-        switch (random) {
+    public void chooseRandomDirection() {
+        int dir = random.nextInt(4);
+        switch (dir) {
             case 0:
                 direction = Direction.FORWARD;
                 break;
@@ -144,136 +156,108 @@ public class Tank {
         }
     }
 
-    private Tank findNearestPlayer(Tank player1, Tank player2) {
-        Vector2 myPos = new Vector2(positionX, positionY);
-        Vector2 player1Pos = new Vector2(player1.positionX, player1.positionY);
-        Vector2 player2Pos = player2 != null ? new Vector2(player2.positionX, player2.positionY) : null;
-
-        float distToPlayer1 = myPos.dst(player1Pos);
-        float distToPlayer2 = player2Pos != null ? myPos.dst(player2Pos) : Float.MAX_VALUE;
-
-        return distToPlayer1 <= distToPlayer2 ? player1 : player2;
-    }
-
-    private Direction getDirectionToTarget(Tank target) {
-        float dx = target.positionX - positionX;
-        float dy = target.positionY - positionY;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            return dx > 0 ? Direction.RIGHT : Direction.LEFT;
-        } else {
-            return dy > 0 ? Direction.FORWARD : Direction.BACKWARD;
-        }
-    }
-
-    public void setState(TankState state) {
-        this.currentState = state;
-    }
-
     public TextureRegion getCurrentFrame() {
-        return currentState.getCurrentFrame(this.stateTime);
-    }
+        // Возвращаем текущий кадр через состояние, если оно доступно
+        if (currentState != null) {
+            try {
+                return currentState.getCurrentFrame(stateTime);
+            } catch (Exception e) {
+                Gdx.app.error("Tank", "Error getting current frame from state: " + e.getMessage());
+            }
+        }
 
-    public void moveUp() {
-        if (!(positionY - 1 < 0)) {
-            positionY -= 1;
+        // Возвращаем кадр по умолчанию, если состояние не установлено или произошла ошибка
+        try {
+            switch (direction) {
+                case FORWARD:
+                    return Assets.getStandByForwardAnimation(colour).getKeyFrame(stateTime, true);
+                case BACKWARD:
+                    return Assets.getStandByBackwardAnimation(colour).getKeyFrame(stateTime, true);
+                case LEFT:
+                    return Assets.getStandByLeftAnimation(colour).getKeyFrame(stateTime, true);
+                case RIGHT:
+                    return Assets.getStandByRightAnimation(colour).getKeyFrame(stateTime, true);
+                default:
+                    return Assets.getStandByForwardAnimation(colour).getKeyFrame(stateTime, true);
+            }
+        } catch (Exception e) {
+            Gdx.app.error("Tank", "Error getting default frame: " + e.getMessage());
+            return null; // Возвращаем null, если не удалось получить кадр
         }
     }
 
-    public void moveDown() {
-        if (!(positionY + 1 > 454)) {
-            positionY += 1;
+    public boolean collidesWith(Tank other) {
+        // Проверяем пересечение прямоугольников танков
+        Rectangle thisBounds = getBounds();
+        Rectangle otherBounds = other.getBounds();
+        return thisBounds.overlaps(otherBounds);
+    }
+
+    public Rectangle getBounds() {
+        // Возвращаем прямоугольник, представляющий границы танка
+        return new Rectangle(positionX, positionY, 26, 26);
+    }
+
+    public boolean takeDamage() {
+        // Если танк неуязвим, урон не наносится
+        if (isInvulnerable()) {
+            return false;
         }
+
+        // Уменьшаем здоровье
+        health--;
+
+        // Делаем танк временно неуязвимым
+        invulnerabilityTimer = INVULNERABILITY_TIME;
+
+        // Возвращаем true, если танк уничтожен
+        return health <= 0;
     }
 
-    public void moveLeft() {
-        if (!(positionX - 1 < 0)) {
-            positionX -= 1;
+    public boolean isAlive() {
+        return health > 0;
+    }
+
+    public boolean isInvulnerable() {
+        return invulnerabilityTimer > 0;
+    }
+
+    public void update(float delta) {
+        // Уменьшаем таймер неуязвимости
+        if (invulnerabilityTimer > 0) {
+            invulnerabilityTimer -= delta;
         }
-    }
-
-    public void moveRight() {
-        if (!(positionX + 1 > 454)) {
-            positionX += 1;
-        }
-    }
-
-    public Bullet shoot() {
-        // Снаряд появляется в центре танка
-        float bulletX = positionX + 13; // 26/2
-        float bulletY = positionY + 13; // 26/2
-        return new Bullet(bulletX, bulletY, direction, colour);
-    }
-
-    public String getColour() {
-        return colour;
-    }
-
-    public void setColour(String colour) {
-        this.colour = colour;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
-    public Direction getDirection() {
-        return direction;
     }
 
     public void setDirection(Direction direction) {
         this.direction = direction;
     }
 
+    public void setState(TankState state) {
+        this.currentState = state;
+    }
+
+    public String getColour() {
+        return colour;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+
+    public Direction getDirection() {
+        return direction;
+    }
+
     public boolean isEnemy() {
         return isEnemy;
     }
 
-    // Геттеры для анимаций
-    public Animation<TextureRegion> getMovingForwardAnimation() {
-        return movingForwardAnimation;
+    public int getHealth() {
+        return health;
     }
 
-    public Animation<TextureRegion> getStandByForwardAnimation() {
-        return standByForwardAnimation;
-    }
-
-    public Animation<TextureRegion> getMovingBackwardAnimation() {
-        return movingBackwardAnimation;
-    }
-
-    public Animation<TextureRegion> getStandByBackwardAnimation() {
-        return standByBackwardAnimation;
-    }
-
-    public Animation<TextureRegion> getMovingLeftAnimation() {
-        return movingLeftAnimation;
-    }
-
-    public Animation<TextureRegion> getStandByLeftAnimation() {
-        return standByLeftAnimation;
-    }
-
-    public Animation<TextureRegion> getMovingRightAnimation() {
-        return movingRightAnimation;
-    }
-
-    public Animation<TextureRegion> getStandByRightAnimation() {
-        return standByRightAnimation;
-    }
-
-    // Метод для получения границ танка
-    public Rectangle getBounds() {
-        return new Rectangle(positionX, positionY, 26, 26);
-    }
-
-    // Проверка столкновения с другим танком
-    public boolean collidesWith(Tank other) {
-        if (other == null) return false;
-        return getBounds().overlaps(other.getBounds());
+    public void setHealth(int health) {
+        this.health = health;
     }
 }

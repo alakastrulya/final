@@ -1,6 +1,5 @@
 package com.mg.game;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
@@ -14,8 +13,8 @@ public class MovingForwardState implements TankState {
     @Override
     public void handleInput(int keycode, float stateTime) {
         if (keycode == Input.Keys.DOWN) {
-            tank.moveDown();
             tank.setDirection(Tank.Direction.FORWARD);
+            tank.moveDown();
         } else if (keycode == Input.Keys.UP) {
             tank.setState(new MovingBackwardState(tank));
         } else if (keycode == Input.Keys.LEFT) {
@@ -29,8 +28,8 @@ public class MovingForwardState implements TankState {
         }
     }
 
-    @Override
     public TextureRegion getCurrentFrame(float stateTime) {
-        return tank.getMovingForwardAnimation().getKeyFrame(stateTime, true);
+        // Используем анимацию для конкретного цвета танка
+        return Assets.getMovingForwardAnimation(tank.getColour()).getKeyFrame(stateTime, true);
     }
 }

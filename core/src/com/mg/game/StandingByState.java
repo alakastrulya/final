@@ -1,6 +1,5 @@
 package com.mg.game;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
@@ -30,15 +29,15 @@ public class StandingByState implements TankState {
     public TextureRegion getCurrentFrame(float stateTime) {
         switch (tank.getDirection()) {
             case FORWARD:
-                return tank.getStandByForwardAnimation().getKeyFrame(stateTime, true);
+                return Assets.getStandByForwardAnimation(tank.getColour()).getKeyFrame(stateTime, true);
             case BACKWARD:
-                return tank.getStandByBackwardAnimation().getKeyFrame(stateTime, true);
+                return Assets.getStandByBackwardAnimation(tank.getColour()).getKeyFrame(stateTime, true);
             case LEFT:
-                return tank.getStandByLeftAnimation().getKeyFrame(stateTime, true);
+                return Assets.getStandByLeftAnimation(tank.getColour()).getKeyFrame(stateTime, true);
             case RIGHT:
-                return tank.getStandByRightAnimation().getKeyFrame(stateTime, true);
+                return Assets.getStandByRightAnimation(tank.getColour()).getKeyFrame(stateTime, true);
             default:
-                return tank.getStandByForwardAnimation().getKeyFrame(stateTime, true);
+                return Assets.getStandByForwardAnimation(tank.getColour()).getKeyFrame(stateTime, true);
         }
     }
 }
