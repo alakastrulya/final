@@ -114,12 +114,16 @@ public class GameScreen implements Screen {
         }
 
         // Инициализация вражеских танков (например, 3 врага)
+        // сначала загружаем карту
+        mapLoader = new MapLoader();
         for (int i = 0; i < 3; i++) {
             Tank enemy = new Tank("red", 1, true);
-            enemy.positionX = 100 + i * 150;
-            enemy.positionY = 100 + i * 100;
+            int[] spawn = findFreeSpawnPoint(50 + i * 60, 50, 16); // шаг 16 пикселей
+            enemy.positionX = spawn[0];
+            enemy.positionY = spawn[1];
             enemies.add(enemy);
         }
+
 
         // Инициализация карты
         mapLoader = new MapLoader();
@@ -366,7 +370,7 @@ public class GameScreen implements Screen {
                 if (checkPlayerCollision(enemy, newX, newY)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with player");
-                } else if (checkEnemyCollision(enemy, newY, newX)) {
+                } else if (checkEnemyCollision(enemy, newY, newX) || checkMapCollision(newX, newY, enemy)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with something");
                 }
@@ -449,45 +453,46 @@ public class GameScreen implements Screen {
 
         Rectangle bulletBounds = bullet.getBounds();
 
+        // 1. Коллизия с твердыми блоками карты
+        for (MapTile tile : mapLoader.tiles) {
+            if (tile.isSolid) {
+                Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
+                if (bulletBounds.overlaps(tileRect)) {
+                    bullet.deactivate();
+                    return; // пуля пропадает — дальше не проверяем
+                }
+            }
+        }
+
+        // 2. Коллизия с игроками
         if (bullet.isFromEnemy()) {
             if (player1 != null && player1.isAlive() && bulletBounds.overlaps(player1.getBounds())) {
                 bullet.deactivate();
                 if (player1.takeDamage()) {
-                    if (explosionSound != null) {
-                        explosionSound.play();
-                    }
+                    if (explosionSound != null) explosionSound.play();
                 } else {
-                    if (hitSound != null) {
-                        hitSound.play();
-                    }
+                    if (hitSound != null) hitSound.play();
                 }
             }
 
             if (player2 != null && player2.isAlive() && bulletBounds.overlaps(player2.getBounds())) {
                 bullet.deactivate();
                 if (player2.takeDamage()) {
-                    if (explosionSound != null) {
-                        explosionSound.play();
-                    }
+                    if (explosionSound != null) explosionSound.play();
                 } else {
-                    if (hitSound != null) {
-                        hitSound.play();
-                    }
+                    if (hitSound != null) hitSound.play();
                 }
             }
         } else {
+            // 3. Коллизия с врагами
             for (Tank enemy : enemies) {
                 if (enemy != null && enemy.isAlive() && bulletBounds.overlaps(enemy.getBounds())) {
                     bullet.deactivate();
                     if (enemy.takeDamage()) {
-                        if (explosionSound != null) {
-                            explosionSound.play();
-                        }
+                        if (explosionSound != null) explosionSound.play();
                         score += 100;
                     } else {
-                        if (hitSound != null) {
-                            hitSound.play();
-                        }
+                        if (hitSound != null) hitSound.play();
                     }
                     break;
                 }
@@ -645,6 +650,58 @@ public class GameScreen implements Screen {
             }
         }
         return false;
+    }
+
+    private int[] findFreeSpawnPoint(int startX, int startY, int step) {
+        for (int y = startY; y < 480; y += step) {
+            for (int x = startX; x < 440; x += step) {
+                Rectangle rect = new Rectangle(x, y, 26 / TILE_SCALE, 26 / TILE_SCALE);
+                boolean blocked = false;
+
+                // 1. Проверка карты
+                for (MapTile tile : mapLoader.tiles) {
+                    if (tile.isSolid) {
+                        Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
+                        if (rect.overlaps(tileRect)) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                }
+
+                // 2. Проверка игрока 1
+                if (!blocked && player1 != null) {
+                    Rectangle r1 = new Rectangle(player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+                    if (rect.overlaps(r1)) {
+                        blocked = true;
+                    }
+                }
+
+                // 3. Проверка игрока 2
+                if (!blocked && player2 != null) {
+                    Rectangle r2 = new Rectangle(player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+                    if (rect.overlaps(r2)) {
+                        blocked = true;
+                    }
+                }
+
+                // 4. Проверка других врагов
+                if (!blocked) {
+                    for (Tank enemy : enemies) {
+                        Rectangle r = new Rectangle(enemy.positionX, enemy.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+                        if (rect.overlaps(r)) {
+                            blocked = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!blocked) {
+                    return new int[]{x, y};
+                }
+            }
+        }
+        return new int[]{50, 50}; // fallback
     }
 
     private boolean checkEnemyCollision(Tank tank, float newY, float newX) {
