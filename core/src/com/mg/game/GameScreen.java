@@ -198,17 +198,18 @@ public class GameScreen implements Screen {
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
 
         // 2. Карта
-        int offsetX = 1;
-        int offsetY = -70;
+        int offsetX = -17;
+        int offsetY = -17;
         float tileScale = 0.8f;
 
         for (MapTile tile : mapLoader.tiles) {
-            int flippedY = (480 / MapLoader.TILE_SIZE - tile.y - 1);
             float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
+            float drawX = tile.x * scaledSize + offsetX;
+            float drawY = tile.y * scaledSize + offsetY;
             batch.draw(
                     tile.region,
-                    tile.x * scaledSize + offsetX,
-                    flippedY * scaledSize + offsetY,
+                    drawX,
+                    drawY,
                     scaledSize,
                     scaledSize
             );
