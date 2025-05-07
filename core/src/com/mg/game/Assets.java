@@ -68,6 +68,8 @@ public class Assets {
     public static Texture pauseTexture;
     public static Texture gameOverTexture;
 
+    public static Texture tileSet; // новый tileset
+
     public static float elapsedTime;
     public static String colour;
     public static int level;
@@ -93,7 +95,7 @@ public class Assets {
     }
 
     public static void loadGameAssets(String colour, int level) {
-        loadLevel(1);
+        loadLevel(level);
         loadTankAnimations(colour, level);
         loadSounds();
         loadUITextures();
@@ -158,6 +160,7 @@ public class Assets {
     }
 
     public static void loadLevel(int level) {
+<<<<<<< HEAD
         try {
             Texture levelBase = new Texture(Gdx.files.internal("sprites/levels/levelBase.png"));
             levelBase.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
@@ -202,4 +205,13 @@ public class Assets {
         if (pauseTexture != null) pauseTexture.dispose();
         if (gameOverTexture != null) gameOverTexture.dispose();
     }
+=======
+        Texture levelBase = new Texture(Gdx.files.internal("sprites/levels/levelBase.png"));
+        levelBase.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        levelBack = new Sprite(levelBase);
+
+        // Загружаем tileset для карты
+        tileSet = new Texture(Gdx.files.internal("sprites/tiles/tileset.png")); // здесь файл tileset.png
+    }
+>>>>>>> ravil
 }

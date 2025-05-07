@@ -12,6 +12,10 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mg.game.map.MapLoader;
+import com.mg.game.map.MapTile;
+import com.mg.game.Bullet;
+import java.util.ArrayList;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
@@ -51,6 +55,13 @@ public class GameScreen implements Screen {
 
     // Добавляем переменную для отслеживания состояния паузы
     private boolean isPaused = false;
+    private Tank player2;
+    private ArrayList<Bullet> bullets = new ArrayList<>();
+    private float player1ShootCooldown = 0f;
+    private float player2ShootCooldown = 0f;
+    private static final float SHOOT_COOLDOWN = 0.5f;
+    private MapLoader mapLoader;
+    private static final float TILE_SCALE = 0.87f;
 
     public GameScreen(gdxGame game, int playerCount) {
         this.playerCount = playerCount;
@@ -127,11 +138,19 @@ public class GameScreen implements Screen {
         } catch (Exception e) {
             Gdx.app.error("GameScreen", "Error playing level sound: " + e.getMessage());
         }
+        player1 = new Tank("yellow", 1);
+        Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
+        levelSound.play();
+        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
+        Assets.loadLevel(1);
+        mapLoader = new MapLoader();
     }
 
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor((float)192/255, (float)192/255, (float)192/255, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+        Gdx.gl.glClearColor(192f / 255, 192f / 255, 192f / 255, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
@@ -190,7 +209,40 @@ public class GameScreen implements Screen {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+
+        // 1. Фон
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
+
+        // 2. Карта
+        int offsetX = 1;
+        int offsetY = -70;
+        float tileScale = 0.8f;
+
+        for (MapTile tile : mapLoader.tiles) {
+            int flippedY = (480 / MapLoader.TILE_SIZE - tile.y - 1);
+            float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
+            batch.draw(
+                    tile.region,
+                    tile.x * scaledSize + offsetX,
+                    flippedY * scaledSize + offsetY,
+                    scaledSize,
+                    scaledSize
+            );
+        }
+
+        // 3. Танки
+        batch.draw(player1.getCurrentFrame(), player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+        if (player2 != null) {
+            batch.draw(player2.getCurrentFrame(), player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
+        }
+
+        // 4. Пули
+        for (Bullet bullet : bullets) {
+            if (bullet.isActive()) {
+                batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
+            }
+        }
+
 
         // Рисуем первый танк, если он жив
         if (player1 != null && player1.isAlive()) {
