@@ -31,6 +31,17 @@ public class Assets {
     private static Map<String, Animation<TextureRegion>> movingRightAnimations = new HashMap<>();
     private static Map<String, Animation<TextureRegion>> standByRightAnimations = new HashMap<>();
 
+    // Текстуры для карты
+    public static Texture tileSet;
+
+    // Текстуры для интерфейса
+    public static Texture pauseTexture;
+    public static Texture gameOverTexture;
+
+    public static float elapsedTime;
+    public static String colour;
+    public static int level;
+
     // Методы для получения анимаций для конкретного цвета
     public static Animation<TextureRegion> getMovingForwardAnimation(String colour) {
         return movingForwardAnimations.getOrDefault(colour, null);
@@ -64,38 +75,32 @@ public class Assets {
         return standByRightAnimations.getOrDefault(colour, null);
     }
 
-    // Текстуры для интерфейса
-    public static Texture pauseTexture;
-    public static Texture gameOverTexture;
-
-    public static Texture tileSet; // новый tileset
-
-    public static float elapsedTime;
-    public static String colour;
-    public static int level;
-
     public static void loadMenuAssets() {
-        textureBack = new Texture(Gdx.files.internal("sprites/menu/menu.jpg"));
-        textureBack.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        spriteBack = new Sprite(textureBack);
-        spriteBack.flip(false, true);
+        try {
+            textureBack = new Texture(Gdx.files.internal("sprites/menu/menu.jpg"));
+            textureBack.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+            spriteBack = new Sprite(textureBack);
+            spriteBack.flip(false, true);
 
-        yellowTankRight1_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right1.png"));
-        yellowTankRight2_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right2.png"));
-        sheet_frames = new TextureRegion[2];
+            yellowTankRight1_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right1.png"));
+            yellowTankRight2_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right2.png"));
+            sheet_frames = new TextureRegion[2];
 
-        sheet_frames[1] = new TextureRegion(yellowTankRight1_Texture, 0, 0, 13, 13);
-        sheet_frames[0] = new TextureRegion(yellowTankRight2_Texture, 0, 0, 13, 13);
+            sheet_frames[1] = new TextureRegion(yellowTankRight1_Texture, 0, 0, 13, 13);
+            sheet_frames[0] = new TextureRegion(yellowTankRight2_Texture, 0, 0, 13, 13);
 
-        movingTankAnimation = new Animation<>(0.1F, sheet_frames);
-        selectionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/menuSelect.mp3"));
+            movingTankAnimation = new Animation<>(0.1F, sheet_frames);
+            selectionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/menuSelect.mp3"));
 
-        // Загружаем текстуры для интерфейса
-        loadUITextures();
+            // Загружаем текстуры для интерфейса
+            loadUITextures();
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Error loading menu assets: " + e.getMessage());
+        }
     }
 
     public static void loadGameAssets(String colour, int level) {
-        loadLevel(level);
+        loadLevel(1);
         loadTankAnimations(colour, level);
         loadSounds();
         loadUITextures();
@@ -160,15 +165,17 @@ public class Assets {
     }
 
     public static void loadLevel(int level) {
-<<<<<<< HEAD
         try {
             Texture levelBase = new Texture(Gdx.files.internal("sprites/levels/levelBase.png"));
             levelBase.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
             levelBack = new Sprite(levelBase);
+
+            // Загружаем tileset для карты
+            tileSet = new Texture(Gdx.files.internal("sprites/tiles/tileset.png"));
         } catch (Exception e) {
             Gdx.app.error("Assets", "Error loading level: " + e.getMessage());
-            // Создаем пустой спрайт, чтобы избежать NullPointerException
             levelBack = null;
+            tileSet = null;
         }
     }
 
@@ -190,7 +197,6 @@ public class Assets {
             gameOverTexture = gameOverSprite.getTexture();
         } catch (Exception e) {
             Gdx.app.error("Assets", "Ошибка загрузки текстур интерфейса: " + e.getMessage());
-            // Создаем пустые текстуры, чтобы избежать NullPointerException
             pauseTexture = null;
             gameOverTexture = null;
         }
@@ -202,16 +208,8 @@ public class Assets {
         if (yellowTankRight2_Texture != null) yellowTankRight2_Texture.dispose();
         if (selectionSound != null) selectionSound.dispose();
         if (levelBeginSound != null) levelBeginSound.dispose();
+        if (tileSet != null) tileSet.dispose();
         if (pauseTexture != null) pauseTexture.dispose();
         if (gameOverTexture != null) gameOverTexture.dispose();
     }
-=======
-        Texture levelBase = new Texture(Gdx.files.internal("sprites/levels/levelBase.png"));
-        levelBase.setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        levelBack = new Sprite(levelBase);
-
-        // Загружаем tileset для карты
-        tileSet = new Texture(Gdx.files.internal("sprites/tiles/tileset.png")); // здесь файл tileset.png
-    }
->>>>>>> ravil
 }

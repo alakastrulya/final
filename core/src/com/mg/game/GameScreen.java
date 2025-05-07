@@ -15,7 +15,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
 import com.mg.game.Bullet;
-import java.util.ArrayList;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
@@ -37,15 +36,15 @@ public class GameScreen implements Screen {
     private float player2ShootCooldown = 0f;
     private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
 
-    // Добавляем переменные для контроля скорости движения
+    // Переменные для контроля скорости движения
     private float moveTimer = 0f;
     private static final float MOVE_DELAY = 0.01f; // Уменьшенная задержка для более быстрого движения
 
-    // Добавляем переменную для контроля движения врагов
+    // Переменная для контроля движения врагов
     private float enemyMoveTimer = 0f;
     private static final float ENEMY_MOVE_DELAY = 0.01f; // Такая же задержка как у игрока
 
-    // Добавляем переменные для отслеживания состояния игры
+    // Переменные для отслеживания состояния игры
     private int score = 0;
     private boolean gameOver = false;
     private BitmapFont font;
@@ -53,13 +52,10 @@ public class GameScreen implements Screen {
     private Sound explosionSound;
     private Sound hitSound;
 
-    // Добавляем переменную для отслеживания состояния паузы
+    // Переменная для отслеживания состояния паузы
     private boolean isPaused = false;
-    private Tank player2;
-    private ArrayList<Bullet> bullets = new ArrayList<>();
-    private float player1ShootCooldown = 0f;
-    private float player2ShootCooldown = 0f;
-    private static final float SHOOT_COOLDOWN = 0.5f;
+
+    // Переменные для карты
     private MapLoader mapLoader;
     private static final float TILE_SCALE = 0.87f;
 
@@ -70,7 +66,7 @@ public class GameScreen implements Screen {
         camera.setToOrtho(true, 640, 480);
         batch = new SpriteBatch();
         textBatch = new SpriteBatch(); // Создаем отдельный SpriteBatch для текста
-        stateTime = 0F;
+        stateTime = 0f;
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
         font = new BitmapFont(true); // Обычный шрифт для интерфейса (перевернутый)
@@ -82,35 +78,28 @@ public class GameScreen implements Screen {
         // Загружаем ресурсы для игры
         Assets.loadLevel(1);
 
-        // ВАЖНО: Загружаем анимации для всех цветов танков перед созданием танков
-        // Загружаем анимации для каждого цвета отдельно
+        // Загружаем анимации для всех цветов танков перед созданием танков
         Assets.loadTankAnimations("yellow", 1);
         Assets.loadTankAnimations("green", 1);
         Assets.loadTankAnimations("red", 1);
 
         // Загрузка звуков - обрабатываем ошибки
         try {
-            // Пробуем загрузить звуки, но не останавливаемся, если их нет
-            try {
-                explosionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
-            } catch (Exception e) {
-                Gdx.app.error("GameScreen", "Error loading explosion sound: " + e.getMessage());
-                // Создаем пустой звук, чтобы избежать NullPointerException
-                explosionSound = null;
-            }
-
-            try {
-                hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.mp3"));
-            } catch (Exception e) {
-                Gdx.app.error("GameScreen", "Error loading hit sound: " + e.getMessage());
-                // Создаем пустой звук, чтобы избежать NullPointerException
-                hitSound = null;
-            }
+            explosionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
         } catch (Exception e) {
-            Gdx.app.error("GameScreen", "Error loading sounds: " + e.getMessage());
+            Gdx.app.error("GameScreen", "Error loading explosion sound: " + e.getMessage());
+            explosionSound = null;
+        }
+
+        try {
+            hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.mp3"));
+        } catch (Exception e) {
+            Gdx.app.error("GameScreen", "Error loading hit sound: " + e.getMessage());
+            hitSound = null;
         }
 
         // Инициализация первого танка
+        // Используем конструктор из первого кода, так как он поддерживает isEnemy
         player1 = new Tank("yellow", 1, false);
         player1.positionX = 50;
         player1.positionY = 50;
@@ -132,24 +121,19 @@ public class GameScreen implements Screen {
             enemies.add(enemy);
         }
 
+        // Инициализация карты
+        mapLoader = new MapLoader();
+
         try {
             Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
             levelSound.play();
         } catch (Exception e) {
             Gdx.app.error("GameScreen", "Error playing level sound: " + e.getMessage());
         }
-        player1 = new Tank("yellow", 1);
-        Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
-        levelSound.play();
-        Assets.loadGameAssets(player1.getColour(), player1.getLevel());
-        Assets.loadLevel(1);
-        mapLoader = new MapLoader();
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor((float)192/255, (float)192/255, (float)192/255, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         Gdx.gl.glClearColor(192f / 255, 192f / 255, 192f / 255, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         camera.update();
@@ -231,37 +215,22 @@ public class GameScreen implements Screen {
         }
 
         // 3. Танки
-        batch.draw(player1.getCurrentFrame(), player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
-        if (player2 != null) {
-            batch.draw(player2.getCurrentFrame(), player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
-        }
-
-        // 4. Пули
-        for (Bullet bullet : bullets) {
-            if (bullet.isActive()) {
-                batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
-            }
-        }
-
-
-        // Рисуем первый танк, если он жив
         if (player1 != null && player1.isAlive()) {
             TextureRegion frame1 = player1.getCurrentFrame();
             if (frame1 != null) {
                 // Если танк неуязвим, рисуем его мигающим
                 if (!player1.isInvulnerable() || (int)(stateTime * 10) % 2 == 0) {
-                    batch.draw(frame1, player1.positionX, player1.positionY, 26, 26);
+                    batch.draw(frame1, player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
                 }
             }
         }
 
-        // Рисуем второй танк, если он существует и жив
         if (player2 != null && player2.isAlive()) {
             TextureRegion frame2 = player2.getCurrentFrame();
             if (frame2 != null) {
                 // Если танк неуязвим, рисуем его мигающим
                 if (!player2.isInvulnerable() || (int)(stateTime * 10) % 2 == 0) {
-                    batch.draw(frame2, player2.positionX, player2.positionY, 26, 26);
+                    batch.draw(frame2, player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
                 }
             }
         }
@@ -271,14 +240,14 @@ public class GameScreen implements Screen {
             if (enemy != null && enemy.isAlive()) {
                 TextureRegion enemyFrame = enemy.getCurrentFrame();
                 if (enemyFrame != null) {
-                    batch.draw(enemyFrame, enemy.positionX, enemy.positionY, 26, 26);
+                    batch.draw(enemyFrame, enemy.positionX, enemy.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
                 }
             }
         }
 
-        // Рисуем снаряды
+        // 4. Пули
         for (Bullet bullet : bullets) {
-            if (bullet != null && bullet.isActive() && bullet.getTexture() != null) {
+            if (bullet.isActive() && bullet.getTexture() != null) {
                 batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
             }
         }
@@ -294,31 +263,24 @@ public class GameScreen implements Screen {
 
         // Отдельная отрисовка для текста PAUSE и GAME OVER
         if (gameOver || isPaused) {
-            // Настраиваем отдельный batch для текста (не перевернутый)
             textBatch.begin();
 
-            // Создаем матрицу для переворота текста по вертикали
             Matrix4 normalMatrix = new Matrix4();
             normalMatrix.setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
             textBatch.setProjectionMatrix(normalMatrix);
 
             if (gameOver) {
                 if (Assets.gameOverTexture != null) {
-                    // Рисуем текстуру GAME OVER
                     textBatch.draw(Assets.gameOverTexture,
                             Gdx.graphics.getWidth()/2 - Assets.gameOverTexture.getWidth()/2,
                             Gdx.graphics.getHeight()/2 - Assets.gameOverTexture.getHeight()/2);
                 } else {
-                    // Рисуем текст GAME OVER
                     largeFont.setColor(Color.RED);
-
-                    // Используем GlyphLayout для центрирования текста
                     GlyphLayout gameOverLayout = new GlyphLayout(largeFont, "GAME OVER");
                     largeFont.draw(textBatch, "GAME OVER",
                             Gdx.graphics.getWidth()/2 - gameOverLayout.width/2,
                             Gdx.graphics.getHeight()/2 + gameOverLayout.height/2);
 
-                    // Рисуем подсказку для перезапуска
                     GlyphLayout restartLayout = new GlyphLayout(largeFont, "Нажмите ENTER для перезапуска");
                     largeFont.setColor(Color.WHITE);
                     largeFont.draw(textBatch, "Нажмите ENTER для перезапуска",
@@ -327,21 +289,16 @@ public class GameScreen implements Screen {
                 }
             } else if (isPaused) {
                 if (Assets.pauseTexture != null) {
-                    // Рисуем текстуру PAUSE
                     textBatch.draw(Assets.pauseTexture,
                             Gdx.graphics.getWidth()/2 - Assets.pauseTexture.getWidth()/2,
                             Gdx.graphics.getHeight()/2 - Assets.pauseTexture.getHeight()/2);
                 } else {
-                    // Рисуем текст PAUSE
                     largeFont.setColor(Color.YELLOW);
-
-                    // Используем GlyphLayout для центрирования текста
                     GlyphLayout pauseLayout = new GlyphLayout(largeFont, "PAUSE");
                     largeFont.draw(textBatch, "PAUSE",
                             Gdx.graphics.getWidth()/2 - pauseLayout.width/2,
                             Gdx.graphics.getHeight()/2 + pauseLayout.height/2);
 
-                    // Рисуем подсказку для продолжения
                     GlyphLayout continueLayout = new GlyphLayout(largeFont, "Нажмите P или ESC для продолжения");
                     largeFont.setColor(Color.WHITE);
                     largeFont.draw(textBatch, "Нажмите P или ESC для продолжения",
@@ -355,11 +312,9 @@ public class GameScreen implements Screen {
     }
 
     private void checkGameOver() {
-        // Проверяем, живы ли игроки
         boolean playersAlive = (player1 != null && player1.isAlive()) ||
                 (player2 != null && player2.isAlive());
 
-        // Проверяем, остались ли враги
         boolean enemiesAlive = false;
         for (Tank enemy : enemies) {
             if (enemy != null && enemy.isAlive()) {
@@ -368,7 +323,6 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Если все игроки мертвы или все враги мертвы, игра окончена
         if (!playersAlive || !enemiesAlive) {
             gameOver = true;
         }
@@ -378,18 +332,15 @@ public class GameScreen implements Screen {
         for (Tank enemy : enemies) {
             if (enemy == null || !enemy.isAlive()) continue;
 
-            // Обновляем состояние врага (выбор направления и стрельба)
             Bullet bullet = enemy.updateEnemy(delta, player1, player2);
             if (bullet != null) {
                 bullets.add(bullet);
             }
 
-            // Проверяем столкновение перед движением врага
             int newX = enemy.positionX;
             int newY = enemy.positionY;
             int keycode = -1;
 
-            // Определяем направление движения
             switch (enemy.getDirection()) {
                 case FORWARD:
                     newY = enemy.positionY + 1;
@@ -409,16 +360,12 @@ public class GameScreen implements Screen {
                     break;
             }
 
-            // Проверяем, может ли враг двигаться
             boolean canMove = true;
             if (newY >= 0 && newY <= 454 && newX >= 0 && newX <= 454) {
-                // Проверяем столкновение с игроками
                 if (checkPlayerCollision(enemy, newX, newY)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with player");
-                }
-                // Проверяем столкновение с другими объектами
-                else if (checkEnemyCollision(enemy, newY, newX)) {
+                } else if (checkEnemyCollision(enemy, newY, newX)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with something");
                 }
@@ -427,7 +374,6 @@ public class GameScreen implements Screen {
                 Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " out of bounds");
             }
 
-            // Если враг может двигаться, выполняем движение и обновляем анимацию
             if (canMove) {
                 Gdx.app.log("Movement", "Enemy moving to " + newX + ", " + newY);
                 switch (enemy.getDirection()) {
@@ -445,14 +391,14 @@ public class GameScreen implements Screen {
                         break;
                 }
                 try {
-                    enemy.handleInput(keycode, stateTime); // Обновляем анимацию
+                    enemy.handleInput(keycode, stateTime);
                 } catch (Exception e) {
                     Gdx.app.error("GameScreen", "Error handling input for enemy: " + e.getMessage());
                 }
             } else {
-                enemy.chooseRandomDirection(); // Если столкновение, меняем направление
+                enemy.chooseRandomDirection();
                 try {
-                    enemy.handleInput(-1, stateTime); // Переключаем на состояние покоя
+                    enemy.handleInput(-1, stateTime);
                 } catch (Exception e) {
                     Gdx.app.error("GameScreen", "Error handling input for enemy: " + e.getMessage());
                 }
@@ -460,23 +406,18 @@ public class GameScreen implements Screen {
         }
     }
 
-    // Метод для проверки столкновения с игроками
     private boolean checkPlayerCollision(Tank enemy, int newX, int newY) {
         if (enemy == null) return false;
 
-        // Сохраняем текущие координаты
         int oldX = enemy.positionX;
         int oldY = enemy.positionY;
 
-        // Устанавливаем новые координаты для проверки
         enemy.positionX = newX;
         enemy.positionY = newY;
 
-        // Проверяем столкновение с игроками
         boolean collides = (player1 != null && player1.isAlive() && enemy.collidesWith(player1)) ||
                 (player2 != null && player2.isAlive() && enemy.collidesWith(player2));
 
-        // Восстанавливаем старые координаты
         enemy.positionX = oldX;
         enemy.positionY = oldY;
 
@@ -493,8 +434,6 @@ public class GameScreen implements Screen {
             }
 
             bullet.update(delta);
-
-            // Проверяем попадания в танки
             checkBulletCollisions(bullet);
 
             if (!bullet.isActive()) {
@@ -507,21 +446,16 @@ public class GameScreen implements Screen {
     private void checkBulletCollisions(Bullet bullet) {
         if (bullet == null || !bullet.isActive()) return;
 
-        // Получаем границы снаряда
         Rectangle bulletBounds = bullet.getBounds();
 
-        // Проверяем попадание в игроков
         if (bullet.isFromEnemy()) {
-            // Снаряд от врага - проверяем попадание в игроков
             if (player1 != null && player1.isAlive() && bulletBounds.overlaps(player1.getBounds())) {
                 bullet.deactivate();
                 if (player1.takeDamage()) {
-                    // Танк уничтожен
                     if (explosionSound != null) {
                         explosionSound.play();
                     }
                 } else {
-                    // Танк получил урон
                     if (hitSound != null) {
                         hitSound.play();
                     }
@@ -531,30 +465,25 @@ public class GameScreen implements Screen {
             if (player2 != null && player2.isAlive() && bulletBounds.overlaps(player2.getBounds())) {
                 bullet.deactivate();
                 if (player2.takeDamage()) {
-                    // Танк уничтожен
                     if (explosionSound != null) {
                         explosionSound.play();
                     }
                 } else {
-                    // Танк получил урон
                     if (hitSound != null) {
                         hitSound.play();
                     }
                 }
             }
         } else {
-            // Снаряд от игрока - проверяем попадание во врагов
             for (Tank enemy : enemies) {
                 if (enemy != null && enemy.isAlive() && bulletBounds.overlaps(enemy.getBounds())) {
                     bullet.deactivate();
                     if (enemy.takeDamage()) {
-                        // Враг уничтожен
                         if (explosionSound != null) {
                             explosionSound.play();
                         }
-                        score += 100; // Увеличиваем счет
+                        score += 100;
                     } else {
-                        // Враг получил урон
                         if (hitSound != null) {
                             hitSound.play();
                         }
@@ -566,7 +495,6 @@ public class GameScreen implements Screen {
     }
 
     private void checkKeyPress() {
-        // Управление первым танком (стрелки + Space для стрельбы)
         if (player1 == null || !player1.isAlive()) return;
 
         int keycode1 = -1;
@@ -630,7 +558,6 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Управление вторым танком (WASD + Enter для стрельбы), если он существует
         if (player2 != null && player2.isAlive()) {
             int keycode2 = -1;
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
@@ -695,19 +622,15 @@ public class GameScreen implements Screen {
         }
     }
 
-    // Метод для проверки столкновения игрока с другим игроком
     private boolean checkPlayerTankCollision(Tank tank, float newY, float newX) {
         if (tank == null) return false;
 
-        // Сохраняем текущие координаты
         float oldX = tank.positionX;
         float oldY = tank.positionY;
 
-        // Устанавливаем новые координаты для проверки
         tank.positionX = (int) newX;
         tank.positionY = (int) newY;
 
-        // Проверяем столкновение с игроками
         boolean collides = false;
 
         if (tank == player1 && player2 != null && player2.isAlive() && tank.collidesWith(player2)) {
@@ -716,26 +639,21 @@ public class GameScreen implements Screen {
             collides = true;
         }
 
-        // Восстанавливаем старые координаты
         tank.positionX = (int) oldX;
         tank.positionY = (int) oldY;
 
         return collides;
     }
 
-    // Метод для проверки столкновения игрока с врагами
     private boolean checkPlayerEnemyCollision(Tank tank, float newY, float newX) {
         if (tank == null) return false;
 
-        // Сохраняем текущие координаты
         float oldX = tank.positionX;
         float oldY = tank.positionY;
 
-        // Устанавливаем новые координаты для проверки
         tank.positionX = (int) newX;
         tank.positionY = (int) newY;
 
-        // Проверяем столкновение с врагами
         boolean collides = false;
         for (Tank enemy : enemies) {
             if (enemy != null && enemy.isAlive() && tank.collidesWith(enemy)) {
@@ -744,26 +662,21 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Восстанавливаем старые координаты
         tank.positionX = (int) oldX;
         tank.positionY = (int) oldY;
 
         return collides;
     }
 
-    // Метод для проверки столкновения врага с другими врагами
     private boolean checkEnemyCollision(Tank tank, float newY, float newX) {
         if (tank == null) return false;
 
-        // Сохраняем текущие координаты
         float oldX = tank.positionX;
         float oldY = tank.positionY;
 
-        // Устанавливаем новые координаты для проверки
         tank.positionX = (int) newX;
         tank.positionY = (int) newY;
 
-        // Проверяем столкновение с другими врагами
         boolean collides = false;
         for (Tank otherEnemy : enemies) {
             if (otherEnemy != null && tank != otherEnemy && otherEnemy.isAlive() && tank.collidesWith(otherEnemy)) {
@@ -772,7 +685,6 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Восстанавливаем старые координаты
         tank.positionX = (int) oldX;
         tank.positionY = (int) oldY;
 
@@ -781,40 +693,35 @@ public class GameScreen implements Screen {
 
     @Override
     public void pause() {
-        // Можно автоматически ставить игру на паузу при сворачивании окна
         isPaused = true;
     }
 
     @Override
     public void resume() {
-        // Можно оставить игру на паузе при восстановлении окна, чтобы игрок сам решил когда продолжить
-        // isPaused = false;
+        // Можно оставить игру на паузе при восстановлении окна
     }
 
     @Override
-    public void show() {
-    }
+    public void show() {}
 
     @Override
-    public void hide() {
-    }
+    public void hide() {}
 
     @Override
     public void dispose() {
         batch.dispose();
-        textBatch.dispose(); // Освобождаем ресурсы текстового batch
+        textBatch.dispose();
         for (Bullet bullet : bullets) {
             if (bullet != null) {
                 bullet.dispose();
             }
         }
         font.dispose();
-        largeFont.dispose(); // Освобождаем ресурсы большого шрифта
+        largeFont.dispose();
         if (explosionSound != null) explosionSound.dispose();
         if (hitSound != null) hitSound.dispose();
     }
 
     @Override
-    public void resize(int width, int height) {
-    }
+    public void resize(int width, int height) {}
 }
