@@ -9,8 +9,10 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -21,6 +23,7 @@ public class GameScreen implements Screen {
     private gdxGame game;
     private OrthographicCamera camera;
     private SpriteBatch batch;
+    private SpriteBatch textBatch; // Отдельный SpriteBatch для текста
     private float stateTime;
     private Tank player1;
     private Tank player2;
@@ -42,6 +45,7 @@ public class GameScreen implements Screen {
     private int score = 0;
     private boolean gameOver = false;
     private BitmapFont font;
+    private BitmapFont largeFont;
     private Sound explosionSound;
     private Sound hitSound;
 
@@ -54,10 +58,15 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(true, 640, 480);
         batch = new SpriteBatch();
+        textBatch = new SpriteBatch(); // Создаем отдельный SpriteBatch для текста
         stateTime = 0F;
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
-        font = new BitmapFont(true); // true для перевернутого текста (т.к. камера перевернута)
+        font = new BitmapFont(true); // Обычный шрифт для интерфейса (перевернутый)
+
+        // Создаем шрифт для больших надписей (НЕ перевернутый)
+        largeFont = new BitmapFont(false); // false - не переворачивать
+        largeFont.getData().setScale(5f); // Увеличиваем размер в 2.5 раза
 
         // Загружаем ресурсы для игры
         Assets.loadLevel(1);
@@ -229,31 +238,68 @@ public class GameScreen implements Screen {
             font.draw(batch, "Health: " + player1.getHealth(), 500, 80);
         }
 
-        // Если игра окончена, отображаем сообщение
-        if (gameOver) {
-            if (Assets.gameOverTexture != null) {
-                // Рисуем текстуру GAME OVER
-                batch.draw(Assets.gameOverTexture, 240 - Assets.gameOverTexture.getWidth()/2, 200);
-            } else {
-                font.setColor(Color.RED);
-                font.draw(batch, "GAME OVER", 250, 240);
-            }
-            font.setColor(Color.WHITE);
-            font.draw(batch, "Нажмите ENTER для перезапуска", 200, 270);
-        } else if (isPaused) {
-            // Если игра на паузе, отображаем сообщение о паузе
-            if (Assets.pauseTexture != null) {
-                // Рисуем текстуру PAUSE
-                batch.draw(Assets.pauseTexture, 240 - Assets.pauseTexture.getWidth()/2, 200);
-            } else {
-                font.setColor(Color.YELLOW);
-                font.draw(batch, "PAUSE", 270, 240);
-            }
-            font.setColor(Color.WHITE);
-            font.draw(batch, "Нажмите P или ESC для продолжения", 180, 270);
-        }
-
         batch.end();
+
+        // Отдельная отрисовка для текста PAUSE и GAME OVER
+        if (gameOver || isPaused) {
+            // Настраиваем отдельный batch для текста (не перевернутый)
+            textBatch.begin();
+
+            // Создаем матрицу для переворота текста по вертикали
+            Matrix4 normalMatrix = new Matrix4();
+            normalMatrix.setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            textBatch.setProjectionMatrix(normalMatrix);
+
+            if (gameOver) {
+                if (Assets.gameOverTexture != null) {
+                    // Рисуем текстуру GAME OVER
+                    textBatch.draw(Assets.gameOverTexture,
+                            Gdx.graphics.getWidth()/2 - Assets.gameOverTexture.getWidth()/2,
+                            Gdx.graphics.getHeight()/2 - Assets.gameOverTexture.getHeight()/2);
+                } else {
+                    // Рисуем текст GAME OVER
+                    largeFont.setColor(Color.RED);
+
+                    // Используем GlyphLayout для центрирования текста
+                    GlyphLayout gameOverLayout = new GlyphLayout(largeFont, "GAME OVER");
+                    largeFont.draw(textBatch, "GAME OVER",
+                            Gdx.graphics.getWidth()/2 - gameOverLayout.width/2,
+                            Gdx.graphics.getHeight()/2 + gameOverLayout.height/2);
+
+                    // Рисуем подсказку для перезапуска
+                    GlyphLayout restartLayout = new GlyphLayout(largeFont, "Нажмите ENTER для перезапуска");
+                    largeFont.setColor(Color.WHITE);
+                    largeFont.draw(textBatch, "Нажмите ENTER для перезапуска",
+                            Gdx.graphics.getWidth()/2 - restartLayout.width/2,
+                            Gdx.graphics.getHeight()/2 + gameOverLayout.height/2 + 40);
+                }
+            } else if (isPaused) {
+                if (Assets.pauseTexture != null) {
+                    // Рисуем текстуру PAUSE
+                    textBatch.draw(Assets.pauseTexture,
+                            Gdx.graphics.getWidth()/2 - Assets.pauseTexture.getWidth()/2,
+                            Gdx.graphics.getHeight()/2 - Assets.pauseTexture.getHeight()/2);
+                } else {
+                    // Рисуем текст PAUSE
+                    largeFont.setColor(Color.YELLOW);
+
+                    // Используем GlyphLayout для центрирования текста
+                    GlyphLayout pauseLayout = new GlyphLayout(largeFont, "PAUSE");
+                    largeFont.draw(textBatch, "PAUSE",
+                            Gdx.graphics.getWidth()/2 - pauseLayout.width/2,
+                            Gdx.graphics.getHeight()/2 + pauseLayout.height/2);
+
+                    // Рисуем подсказку для продолжения
+                    GlyphLayout continueLayout = new GlyphLayout(largeFont, "Нажмите P или ESC для продолжения");
+                    largeFont.setColor(Color.WHITE);
+                    largeFont.draw(textBatch, "Нажмите P или ESC для продолжения",
+                            Gdx.graphics.getWidth()/2 - continueLayout.width/2,
+                            Gdx.graphics.getHeight()/2 + pauseLayout.height/2 + 40);
+                }
+            }
+
+            textBatch.end();
+        }
     }
 
     private void checkGameOver() {
@@ -320,7 +366,7 @@ public class GameScreen implements Screen {
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with player");
                 }
                 // Проверяем столкновение с другими объектами
-                else if (wouldCollide(enemy, newY, newX)) {
+                else if (checkEnemyCollision(enemy, newY, newX)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with something");
                 }
@@ -362,7 +408,7 @@ public class GameScreen implements Screen {
         }
     }
 
-    // Новый метод для проверки столкновения с игроками
+    // Метод для проверки столкновения с игроками
     private boolean checkPlayerCollision(Tank enemy, int newX, int newY) {
         if (enemy == null) return false;
 
@@ -475,7 +521,7 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
             keycode1 = Input.Keys.DOWN;
             int newY = player1.positionY + 1;
-            if (newY <= 454 && !wouldCollide(player1, newY, player1.positionX) && !wouldCollideWithEnemy(player1, newY, player1.positionX)) {
+            if (newY <= 454 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX)) {
                 try {
                     player1.handleInput(keycode1, stateTime);
                 } catch (Exception e) {
@@ -485,7 +531,7 @@ public class GameScreen implements Screen {
         } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
             keycode1 = Input.Keys.UP;
             int newY = player1.positionY - 1;
-            if (newY >= 0 && !wouldCollide(player1, newY, player1.positionX) && !wouldCollideWithEnemy(player1, newY, player1.positionX)) {
+            if (newY >= 0 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX)) {
                 try {
                     player1.handleInput(keycode1, stateTime);
                 } catch (Exception e) {
@@ -495,7 +541,7 @@ public class GameScreen implements Screen {
         } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
             keycode1 = Input.Keys.LEFT;
             int newX = player1.positionX - 1;
-            if (newX >= 0 && !wouldCollide(player1, player1.positionY, newX) && !wouldCollideWithEnemy(player1, player1.positionY, newX)) {
+            if (newX >= 0 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX)) {
                 try {
                     player1.handleInput(keycode1, stateTime);
                 } catch (Exception e) {
@@ -505,7 +551,7 @@ public class GameScreen implements Screen {
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             keycode1 = Input.Keys.RIGHT;
             int newX = player1.positionX + 1;
-            if (newX <= 454 && !wouldCollide(player1, player1.positionY, newX) && !wouldCollideWithEnemy(player1, player1.positionY, newX)) {
+            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX)) {
                 try {
                     player1.handleInput(keycode1, stateTime);
                 } catch (Exception e) {
@@ -538,7 +584,7 @@ public class GameScreen implements Screen {
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                 keycode2 = Input.Keys.DOWN;
                 int newY = player2.positionY + 1;
-                if (newY <= 454 && !wouldCollide(player2, newY, player2.positionX) && !wouldCollideWithEnemy(player2, newY, player2.positionX)) {
+                if (newY <= 454 && !checkPlayerTankCollision(player2, newY, player2.positionX) && !checkPlayerEnemyCollision(player2, newY, player2.positionX)) {
                     try {
                         player2.handleInput(keycode2, stateTime);
                     } catch (Exception e) {
@@ -548,7 +594,7 @@ public class GameScreen implements Screen {
             } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
                 keycode2 = Input.Keys.UP;
                 int newY = player2.positionY - 1;
-                if (newY >= 0 && !wouldCollide(player2, newY, player2.positionX) && !wouldCollideWithEnemy(player2, newY, player2.positionX)) {
+                if (newY >= 0 && !checkPlayerTankCollision(player2, newY, player2.positionX) && !checkPlayerEnemyCollision(player2, newY, player2.positionX)) {
                     try {
                         player2.handleInput(keycode2, stateTime);
                     } catch (Exception e) {
@@ -558,7 +604,7 @@ public class GameScreen implements Screen {
             } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                 keycode2 = Input.Keys.LEFT;
                 int newX = player2.positionX - 1;
-                if (newX >= 0 && !wouldCollide(player2, player2.positionY, newX) && !wouldCollideWithEnemy(player2, player2.positionY, newX)) {
+                if (newX >= 0 && !checkPlayerTankCollision(player2, player2.positionY, newX) && !checkPlayerEnemyCollision(player2, player2.positionY, newX)) {
                     try {
                         player2.handleInput(keycode2, stateTime);
                     } catch (Exception e) {
@@ -568,7 +614,7 @@ public class GameScreen implements Screen {
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 keycode2 = Input.Keys.RIGHT;
                 int newX = player2.positionX + 1;
-                if (newX <= 454 && !wouldCollide(player2, player2.positionY, newX) && !wouldCollideWithEnemy(player2, player2.positionY, newX)) {
+                if (newX <= 454 && !checkPlayerTankCollision(player2, player2.positionY, newX) && !checkPlayerEnemyCollision(player2, player2.positionY, newX)) {
                     try {
                         player2.handleInput(keycode2, stateTime);
                     } catch (Exception e) {
@@ -597,8 +643,36 @@ public class GameScreen implements Screen {
         }
     }
 
-    // Новый метод для проверки столкновения с врагами
-    private boolean wouldCollideWithEnemy(Tank tank, float newY, float newX) {
+    // Метод для проверки столкновения игрока с другим игроком
+    private boolean checkPlayerTankCollision(Tank tank, float newY, float newX) {
+        if (tank == null) return false;
+
+        // Сохраняем текущие координаты
+        float oldX = tank.positionX;
+        float oldY = tank.positionY;
+
+        // Устанавливаем новые координаты для проверки
+        tank.positionX = (int) newX;
+        tank.positionY = (int) newY;
+
+        // Проверяем столкновение с игроками
+        boolean collides = false;
+
+        if (tank == player1 && player2 != null && player2.isAlive() && tank.collidesWith(player2)) {
+            collides = true;
+        } else if (tank == player2 && player1 != null && player1.isAlive() && tank.collidesWith(player1)) {
+            collides = true;
+        }
+
+        // Восстанавливаем старые координаты
+        tank.positionX = (int) oldX;
+        tank.positionY = (int) oldY;
+
+        return collides;
+    }
+
+    // Метод для проверки столкновения игрока с врагами
+    private boolean checkPlayerEnemyCollision(Tank tank, float newY, float newX) {
         if (tank == null) return false;
 
         // Сохраняем текущие координаты
@@ -625,8 +699,8 @@ public class GameScreen implements Screen {
         return collides;
     }
 
-    // Метод для проверки столкновения при предполагаемом новом положении
-    private boolean wouldCollide(Tank tank, float newY, float newX) {
+    // Метод для проверки столкновения врага с другими врагами
+    private boolean checkEnemyCollision(Tank tank, float newY, float newX) {
         if (tank == null) return false;
 
         // Сохраняем текущие координаты
@@ -637,22 +711,12 @@ public class GameScreen implements Screen {
         tank.positionX = (int) newX;
         tank.positionY = (int) newY;
 
-        // Проверяем столкновение с игроками
+        // Проверяем столкновение с другими врагами
         boolean collides = false;
-
-        if (tank == player1 && player2 != null && player2.isAlive() && tank.collidesWith(player2)) {
-            collides = true;
-        } else if (tank == player2 && player1 != null && player1.isAlive() && tank.collidesWith(player1)) {
-            collides = true;
-        }
-
-        // Если танк — враг, проверяем столкновение с другими врагами
-        if (tank.isEnemy() && !collides) {
-            for (Tank otherEnemy : enemies) {
-                if (otherEnemy != null && tank != otherEnemy && otherEnemy.isAlive() && tank.collidesWith(otherEnemy)) {
-                    collides = true;
-                    break;
-                }
+        for (Tank otherEnemy : enemies) {
+            if (otherEnemy != null && tank != otherEnemy && otherEnemy.isAlive() && tank.collidesWith(otherEnemy)) {
+                collides = true;
+                break;
             }
         }
 
@@ -686,12 +750,14 @@ public class GameScreen implements Screen {
     @Override
     public void dispose() {
         batch.dispose();
+        textBatch.dispose(); // Освобождаем ресурсы текстового batch
         for (Bullet bullet : bullets) {
             if (bullet != null) {
                 bullet.dispose();
             }
         }
         font.dispose();
+        largeFont.dispose(); // Освобождаем ресурсы большого шрифта
         if (explosionSound != null) explosionSound.dispose();
         if (hitSound != null) hitSound.dispose();
     }
