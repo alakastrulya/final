@@ -14,7 +14,7 @@ public class Bullet {
     private TextureRegion texture;
     private boolean active;
     private boolean fromEnemy;
-    private static final float SPEED = 5.0f; // Скорость снаряда
+    private static final float SPEED = 5.0f;
 
     public Bullet(float startX, float startY, Tank.Direction direction, String tankColour) {
         this(startX, startY, direction, tankColour, false);
@@ -27,7 +27,6 @@ public class Bullet {
         this.active = true;
         this.fromEnemy = fromEnemy;
 
-        // Создаём текстуру для снаряда (маленький прямоугольник)
         Pixmap pixmap = new Pixmap(4, 4, Pixmap.Format.RGBA8888);
         if (tankColour.equals("yellow")) {
             pixmap.setColor(Color.YELLOW);
@@ -46,7 +45,6 @@ public class Bullet {
     public void update(float delta) {
         if (!active) return;
 
-        // Двигаем снаряд в зависимости от направления
         switch (direction) {
             case FORWARD:
                 positionY += SPEED;
@@ -62,7 +60,6 @@ public class Bullet {
                 break;
         }
 
-        // Если снаряд вышел за пределы экрана, деактивируем его
         if (positionX < 0 || positionX > Gdx.graphics.getWidth() ||
                 positionY < 0 || positionY > Gdx.graphics.getHeight()) {
             active = false;
@@ -101,5 +98,9 @@ public class Bullet {
 
     public Rectangle getBounds() {
         return new Rectangle(positionX, positionY, 4, 4);
+    }
+
+    public Tank.Direction getDirection() {
+        return direction;
     }
 }

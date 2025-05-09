@@ -28,15 +28,14 @@ public class MapLoader {
         }
 
         Texture sheet = new Texture(sheetHandle);
-        int sheetW = sheet.getWidth();
-        int sheetH = sheet.getHeight();
-        int cols = sheetW / TILE_SIZE;
-        int rows = sheetH / TILE_SIZE;
-        Gdx.app.log("MapLoader", "Loaded tilesheet " + sheetW + "×" + sheetH + ", TILE_SIZE=" + TILE_SIZE + " => rows=" + rows + ", cols=" + cols);
+        int cols = sheet.getWidth() / TILE_SIZE;
+        int rows = sheet.getHeight() / TILE_SIZE;
+        Gdx.app.log("MapLoader", "Loaded tilesheet " + sheet.getWidth() + "×" + sheet.getHeight() +
+                ", TILE_SIZE=" + TILE_SIZE + " => rows=" + rows + ", cols=" + cols);
 
         TextureRegion[][] all = TextureRegion.split(sheet, TILE_SIZE, TILE_SIZE);
 
-        String[] lines = mapHandle.readString().split("\\r?\\n");
+        String[] lines = mapHandle.readString().split("\r?\n");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             if (line.isEmpty()) continue;
@@ -59,20 +58,30 @@ public class MapLoader {
                 }
 
                 TextureRegion region = all[tileRow][tileCol];
-
+                TextureRegion damagedTop = null;
+                TextureRegion damagedBottom = null;
+                TextureRegion damagedLeft = null;
+                TextureRegion damagedRight = null;
                 boolean isSolid = false;
-                boolean isDestructible = true;
+                boolean isDestructible = false;
 
-                // === Настрой тайлы вручную ===
-                if (tileRow == 0 && tileCol == 0) { // кирпич
+                if (tileRow == 0 && tileCol == 0) { // Кирпич
                     isSolid = true;
                     isDestructible = true;
-                } else if (tileRow == 1 && tileCol == 0) { // стальная стена (неразрушаемая)
+                    damagedTop = all[0][2];
+                    damagedBottom = all[0][1];
+                    damagedLeft = all[0][4];
+                    damagedRight = all[0][3];
+                } else if (tileRow == 1 && tileCol == 0) { // Сталь
                     isSolid = true;
                     isDestructible = false;
                 }
 
-                tiles.add(new MapTile(region, mapCol, mapRow, isSolid, isDestructible));
+                MapTile tile = new MapTile(region, mapCol, mapRow, isSolid, isDestructible);
+//                if (damagedRegion != null) {
+//                    tile.setDamagedRegion(damagedRegion);
+//                }
+                tiles.add(tile);
 
             } catch (NumberFormatException ex) {
                 Gdx.app.error("MapLoader", "Ошибка разбора числа в строке " + (i + 1) + ": " + line);

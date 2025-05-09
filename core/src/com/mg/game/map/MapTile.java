@@ -2,23 +2,22 @@ package com.mg.game.map;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.Tank;
 
 public class MapTile {
-    public final TextureRegion region;
+    public TextureRegion region;
+    public TextureRegion damagedRegion;
     public final int x, y;
     public boolean isSolid;
-    public boolean isDestructible; // <- добавлено
+    public boolean isDestructible;
+    private int hitPoints = 2;
 
     public MapTile(TextureRegion region, int x, int y, boolean isSolid, boolean isDestructible) {
-        this.region = region;
+        this.region = new TextureRegion(region);
         this.x = x;
         this.y = y;
         this.isSolid = isSolid;
         this.isDestructible = isDestructible;
-    }
-
-    public MapTile(TextureRegion region, int x, int y) {
-        this(region, x, y, false, false); // по умолчанию — не solid и не разрушается
     }
 
     public Rectangle getBounds(int tileSize, float scale, int offsetX, int offsetY) {
@@ -28,8 +27,19 @@ public class MapTile {
         return new Rectangle(drawX, drawY, scaledSize, scaledSize);
     }
 
-    public int getFlippedY(int screenHeight, int tileSize) {
-        int totalTilesY = screenHeight / tileSize;
-        return totalTilesY - y - 1;
+    public void setDamagedRegion(TextureRegion damaged) {
+        this.damagedRegion = new TextureRegion(damaged);
+    }
+
+    public void takeHit() {
+        if (!isDestructible) return;
+        hitPoints--;
+        if (hitPoints == 1 && damagedRegion != null) {
+            this.region = new TextureRegion(damagedRegion);
+        } else if (hitPoints <= 0) {
+            isSolid = false;
+            isDestructible = false;
+        }
     }
 }
+

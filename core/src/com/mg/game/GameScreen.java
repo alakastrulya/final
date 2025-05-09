@@ -101,14 +101,14 @@ public class GameScreen implements Screen {
         // Инициализация первого танка
         // Используем конструктор из первого кода, так как он поддерживает isEnemy
         player1 = new Tank("yellow", 1, false);
-        player1.positionX = 160;
+        player1.positionX = 152;
         player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
             player2 = new Tank("green", 1, false);
-            player2.positionX = 290;
+            player2.positionX = 299;
             player2.positionY = 450;
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
         }
@@ -207,16 +207,11 @@ public class GameScreen implements Screen {
         float tileScale = 0.8f;
 
         for (MapTile tile : mapLoader.tiles) {
+            if (!tile.isSolid) continue; // если разрушен — не рисуем
             float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
             float drawX = tile.x * scaledSize + offsetX;
             float drawY = tile.y * scaledSize + offsetY;
-            batch.draw(
-                    tile.region,
-                    drawX,
-                    drawY,
-                    scaledSize,
-                    scaledSize
-            );
+            batch.draw(tile.region, drawX, drawY, scaledSize, scaledSize);
         }
 
         // 3. Танки
@@ -455,12 +450,16 @@ public class GameScreen implements Screen {
 
         // 1. Коллизия с твердыми блоками карты
         for (MapTile tile : mapLoader.tiles) {
-            if (tile.isSolid) {
-                Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
-                if (bulletBounds.overlaps(tileRect)) {
-                    bullet.deactivate();
-                    return; // пуля пропадает — дальше не проверяем
+            if (!tile.isSolid) continue;
+
+            Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
+            if (bulletBounds.overlaps(tileRect)) {
+                if (tile.isDestructible) {
+                    tile.takeHit();
                 }
+
+                bullet.deactivate();
+                return;
             }
         }
 
