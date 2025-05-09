@@ -200,7 +200,9 @@ public class GameScreen implements Screen {
 
         // 1. Фон
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
-
+        batch.setColor(0, 0, 0, 0.4f); // Черный с 40% прозрачности
+        batch.draw(Assets.pixel, 480, 0, 160, 480); // x=480 (начало боковой панели), ширина=160
+        batch.setColor(Color.WHITE); // Восстанавливаем цвет
         // 2. Карта
         int offsetX = -17;
         int offsetY = -17;

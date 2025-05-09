@@ -22,6 +22,7 @@ public class Assets {
     public static Sound levelBeginSound;
     public static Texture enemyIcon;
     public static Texture healthIcon;
+    public static Texture pixel;
 
 
     // Карты для хранения анимаций для каждого цвета
@@ -196,6 +197,7 @@ public class Assets {
             pauseTexture = pauseSprite.getTexture();
             enemyIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/image.png"));
             healthIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/iconHealth.png"));
+            pixel = new Texture(Gdx.files.internal("sprites/ui/pixel.png"));
 
 
             Sprite gameOverSprite = new Sprite(gameOverTexture);
