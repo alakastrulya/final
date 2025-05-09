@@ -35,6 +35,8 @@ public class GameScreen implements Screen {
     private float player1ShootCooldown = 0f;
     private float player2ShootCooldown = 0f;
     private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
+    private LevelIntroAnimation levelIntro;
+    private boolean isLevelIntroPlaying = true;
 
     // Переменные для контроля скорости движения
     private float moveTimer = 0f;
@@ -65,25 +67,26 @@ public class GameScreen implements Screen {
         camera = new OrthographicCamera();
         camera.setToOrtho(true, 640, 480);
         batch = new SpriteBatch();
-        textBatch = new SpriteBatch(); // Создаем отдельный SpriteBatch для текста
+        textBatch = new SpriteBatch();
         stateTime = 0f;
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
-        font = new BitmapFont(true); // Обычный шрифт для интерфейса (перевернутый)
+        font = new BitmapFont(true);
 
-        // Создаем шрифт для больших надписей (НЕ перевернутый)
-        largeFont = new BitmapFont(false); // false - не переворачивать
-        largeFont.getData().setScale(5f); // Увеличиваем размер в 2.5 раза
+        largeFont = new BitmapFont(false);
+        largeFont.getData().setScale(5f);
 
         // Загружаем ресурсы для игры
         Assets.loadLevel(1);
+        Assets.loadCurtainTextures();
+
 
         // Загружаем анимации для всех цветов танков перед созданием танков
         Assets.loadTankAnimations("yellow", 1);
         Assets.loadTankAnimations("green", 1);
         Assets.loadTankAnimations("red", 1);
 
-        // Загрузка звуков - обрабатываем ошибки
+        // Загрузка звуков
         try {
             explosionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
         } catch (Exception e) {
@@ -99,7 +102,6 @@ public class GameScreen implements Screen {
         }
 
         // Инициализация первого танка
-        // Используем конструктор из первого кода, так как он поддерживает isEnemy
         player1 = new Tank("yellow", 1, false);
         player1.positionX = 160;
         player1.positionY = 450;
@@ -113,27 +115,21 @@ public class GameScreen implements Screen {
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
         }
 
-        // Инициализация вражеских танков (например, 3 врага)
-        // сначала загружаем карту
+        // Инициализация карты
         mapLoader = new MapLoader();
+
+        // Инициализация вражеских танков
         for (int i = 0; i < 3; i++) {
             Tank enemy = new Tank("red", 1, true);
-            int[] spawn = findFreeSpawnPoint(50 + i * 60, 50, 16); // шаг 16 пикселей
+            int[] spawn = findFreeSpawnPoint(50 + i * 60, 50, 16);
             enemy.positionX = spawn[0];
             enemy.positionY = spawn[1];
             enemies.add(enemy);
         }
 
-
-        // Инициализация карты
-        mapLoader = new MapLoader();
-
-        try {
-            Music levelSound = Gdx.audio.newMusic(Gdx.files.internal("sounds/startLevel.mp3"));
-            levelSound.play();
-        } catch (Exception e) {
-            Gdx.app.error("GameScreen", "Error playing level sound: " + e.getMessage());
-        }
+        // Инициализация анимации начала уровня
+        levelIntro = new LevelIntroAnimation(1); // 1 - номер уровня
+        isLevelIntroPlaying = true;
     }
 
     @Override
@@ -150,6 +146,44 @@ public class GameScreen implements Screen {
 
         // Проверяем, не закончилась ли игра
         checkGameOver();
+
+        // Если играет анимация начала уровня
+        if (isLevelIntroPlaying) {
+            levelIntro.update(delta);
+
+            // Если анимация завершена, начинаем игру
+            if (levelIntro.isFinished()) {
+                isLevelIntroPlaying = false;
+            }
+
+            batch.begin();
+            // Рисуем фон уровня
+            batch.draw(Assets.levelBack, 0, 0, 480, 480);
+
+            // Рисуем карту
+            int offsetX = -17;
+            int offsetY = -17;
+            float tileScale = 0.8f;
+
+            for (MapTile tile : mapLoader.tiles) {
+                float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
+                float drawX = tile.x * scaledSize + offsetX;
+                float drawY = tile.y * scaledSize + offsetY;
+                batch.draw(
+                        tile.region,
+                        drawX,
+                        drawY,
+                        scaledSize,
+                        scaledSize
+                );
+            }
+
+            // Рисуем анимацию начала уровня
+            levelIntro.render(batch);
+
+            batch.end();
+            return;
+        }
 
         // Обновляем игру только если она не на паузе и не окончена
         if (!gameOver && !isPaused) {
@@ -756,6 +790,7 @@ public class GameScreen implements Screen {
         largeFont.dispose();
         if (explosionSound != null) explosionSound.dispose();
         if (hitSound != null) hitSound.dispose();
+        if (levelIntro != null) levelIntro.dispose();
     }
 
     @Override
