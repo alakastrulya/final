@@ -456,6 +456,28 @@ public class GameScreen implements Screen {
             if (bulletBounds.overlaps(tileRect)) {
                 if (tile.isDestructible) {
                     tile.takeHit();
+
+                    // ← вот эта строка:
+                    if (tile.isBase && !tile.isSolid) {
+                        gameOver = true;
+                        Gdx.app.log("GameScreen", "База уничтожена! Игра окончена.");
+                    }
+
+                    // Попробуем также повредить соседний блок
+                    int tx = tile.x;
+                    int ty = tile.y;
+                    for (MapTile neighbor : mapLoader.tiles) {
+                        if (!neighbor.isDestructible || !neighbor.isSolid) continue;
+
+                        boolean isNeighbor =
+                                (neighbor.x == tx && Math.abs(neighbor.y - ty) == 1) ||
+                                        (neighbor.y == ty && Math.abs(neighbor.x - tx) == 1);
+
+                        if (isNeighbor) {
+                            neighbor.takeHit();
+                            break;
+                        }
+                    }
                 }
 
                 bullet.deactivate();

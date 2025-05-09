@@ -57,31 +57,47 @@ public class MapLoader {
                     continue;
                 }
 
+                // … внутри цикла по строкам карты, вместо старой логики:
                 TextureRegion region = all[tileRow][tileCol];
-                TextureRegion damagedTop = null;
+                TextureRegion damagedTop    = null;
                 TextureRegion damagedBottom = null;
-                TextureRegion damagedLeft = null;
-                TextureRegion damagedRight = null;
-                boolean isSolid = false;
+                TextureRegion damagedLeft   = null;
+                TextureRegion damagedRight  = null;
+                boolean isSolid      = false;
                 boolean isDestructible = false;
+                boolean isBase       = false;
 
                 if (tileRow == 0 && tileCol == 0) { // Кирпич
-                    isSolid = true;
+                    isSolid       = true;
                     isDestructible = true;
-                    damagedTop = all[0][2];
+                    // Четыре состояния повреждения
+                    damagedTop    = all[0][2];
                     damagedBottom = all[0][1];
-                    damagedLeft = all[0][4];
-                    damagedRight = all[0][3];
+                    damagedLeft   = all[0][4];
+                    damagedRight  = all[0][3];
                 } else if (tileRow == 1 && tileCol == 0) { // Сталь
-                    isSolid = true;
+                    isSolid       = true;
                     isDestructible = false;
+                } else if (tileRow == 2 && tileCol == 0) { // Орёл (база)
+                    isSolid       = true;
+                    isDestructible = true;
+                    damagedTop    = all[2][1]; // разрушённая база
+                    isBase        = true;
                 }
 
+// Создаём тайл и устанавливаем повреждения
                 MapTile tile = new MapTile(region, mapCol, mapRow, isSolid, isDestructible);
-//                if (damagedRegion != null) {
-//                    tile.setDamagedRegion(damagedRegion);
-//                }
+                if (damagedTop != null) {
+                    tile.setDamagedTopRegion(damagedTop);
+                    tile.setDamagedBottomRegion(damagedBottom);
+                    tile.setDamagedLeftRegion(damagedLeft);
+                    tile.setDamagedRightRegion(damagedRight);
+                }
+                if (isBase) {
+                    tile.setBase(true);
+                }
                 tiles.add(tile);
+
 
             } catch (NumberFormatException ex) {
                 Gdx.app.error("MapLoader", "Ошибка разбора числа в строке " + (i + 1) + ": " + line);

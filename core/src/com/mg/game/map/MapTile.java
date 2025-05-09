@@ -2,7 +2,6 @@ package com.mg.game.map;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import com.mg.game.Tank;
 
 public class MapTile {
     public TextureRegion region;
@@ -10,7 +9,9 @@ public class MapTile {
     public final int x, y;
     public boolean isSolid;
     public boolean isDestructible;
+    public boolean isBase = false; // ← база (орёл)
     private int hitPoints = 2;
+    private TextureRegion damagedTop, damagedBottom, damagedLeft, damagedRight;
 
     public MapTile(TextureRegion region, int x, int y, boolean isSolid, boolean isDestructible) {
         this.region = new TextureRegion(region);
@@ -27,19 +28,31 @@ public class MapTile {
         return new Rectangle(drawX, drawY, scaledSize, scaledSize);
     }
 
+    // старый общий сеттер, если он ещё нужен
     public void setDamagedRegion(TextureRegion damaged) {
         this.damagedRegion = new TextureRegion(damaged);
     }
 
+    public void setDamagedTopRegion(TextureRegion r)    { this.damagedTop = r; }
+    public void setDamagedBottomRegion(TextureRegion r) { this.damagedBottom = r; }
+    public void setDamagedLeftRegion(TextureRegion r)   { this.damagedLeft = r; }
+    public void setDamagedRightRegion(TextureRegion r)  { this.damagedRight = r; }
+
+    // —— Добавляем этот метод ——
+    public void setBase(boolean isBase) {
+        this.isBase = isBase;
+    }
+
     public void takeHit() {
         if (!isDestructible) return;
-        hitPoints--;
-        if (hitPoints == 1 && damagedRegion != null) {
-            this.region = new TextureRegion(damagedRegion);
-        } else if (hitPoints <= 0) {
-            isSolid = false;
-            isDestructible = false;
-        }
+
+        // Помечаем тайл как неавтразрушаемый и проходной
+        isSolid = false;
+        isDestructible = false;
+
+        // Если хотите сразу менять спрайт на разрушенный (например, damagedRegion), можно раскомментировать:
+        // if (damagedRegion != null) {
+        //     this.region = new TextureRegion(damagedRegion);
+        // }
     }
 }
-
