@@ -393,7 +393,7 @@ public class GameScreen implements Screen {
             }
 
             boolean canMove = true;
-            if (newY >= 0 && newY <= 454 && newX >= 0 && newX <= 454) {
+            if (newY >= 0 && newY <= 454 && newX >= 0 && newX <= 454-9) {
                 if (checkPlayerCollision(enemy, newX, newY)) {
                     canMove = false;
                     Gdx.app.log("Collision", "Enemy at " + enemy.positionX + ", " + enemy.positionY + " collides with player");
@@ -552,7 +552,7 @@ public class GameScreen implements Screen {
         } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
             keycode1 = Input.Keys.RIGHT;
             int newX = player1.positionX + 1;
-            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
+            if (newX <= 454-9 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
                 player1.handleInput(keycode1, stateTime);
             }
         } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && player1ShootCooldown <= 0) {
@@ -599,7 +599,7 @@ public class GameScreen implements Screen {
             } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                 keycode2 = Input.Keys.RIGHT;
                 int newX = player2.positionX + 1;
-                if (newX <= 454
+                if (newX <= 454-9
                         && !checkPlayerTankCollision(player2, player2.positionY, newX)
                         && !checkPlayerEnemyCollision(player2, player2.positionY, newX)
                         && !checkMapCollision(newX, player2.positionY, player2)) {
