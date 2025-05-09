@@ -260,9 +260,34 @@ public class GameScreen implements Screen {
         // Отображаем счет и здоровье
         font.setColor(Color.BLACK);
         font.draw(batch, "Score: " + score, 500, 50);
-        if (player1 != null) {
-            font.draw(batch, "Health: " + player1.getHealth(), 500, 80);
+        int aliveEnemies = 0;
+        for (Tank enemy : enemies) {
+            if (enemy.isAlive()) aliveEnemies++;
         }
+
+        font.draw(batch, "Enemies: ", 500, 140);
+        if (Assets.enemyIcon != null) {
+            int enemyIndex = 0;
+            for (Tank enemy : enemies) {
+                if (enemy.isAlive()) {
+                    batch.draw(Assets.enemyIcon, 500 + (enemyIndex * 20), 160, 16, 16);
+                    enemyIndex++;
+                }
+            }
+        }
+        if (Assets.healthIcon != null && player1 != null) {
+            font.draw(batch, "P1: Health ", 500, 190);
+            for (int i = 0; i < player1.getHealth(); i++) {
+                batch.draw(Assets.healthIcon, 500 + i * 20, 210, 16, 16);
+            }
+        }
+        if (Assets.healthIcon != null && player2 != null) {
+            font.draw(batch, "P2: Health ", 500, 230);
+            for (int i = 0; i < player2.getHealth(); i++) {
+                batch.draw(Assets.healthIcon, 500 + i * 20, 250, 16, 16); // P2
+            }
+        }
+
 
         batch.end();
 

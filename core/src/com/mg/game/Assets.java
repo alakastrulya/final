@@ -20,6 +20,9 @@ public class Assets {
     public static Sprite levelBack;
     public static Sound selectionSound;
     public static Sound levelBeginSound;
+    public static Texture enemyIcon;
+    public static Texture healthIcon;
+
 
     // Карты для хранения анимаций для каждого цвета
     private static Map<String, Animation<TextureRegion>> movingForwardAnimations = new HashMap<>();
@@ -191,6 +194,9 @@ public class Assets {
             Sprite pauseSprite = new Sprite(pauseTexture);
             pauseSprite.flip(false, true);
             pauseTexture = pauseSprite.getTexture();
+            enemyIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/image.png"));
+            healthIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/iconHealth.png"));
+
 
             Sprite gameOverSprite = new Sprite(gameOverTexture);
             gameOverSprite.flip(false, true);
@@ -199,6 +205,7 @@ public class Assets {
             Gdx.app.error("Assets", "Ошибка загрузки текстур интерфейса: " + e.getMessage());
             pauseTexture = null;
             gameOverTexture = null;
+            healthIcon = null;
         }
     }
 
@@ -211,5 +218,7 @@ public class Assets {
         if (tileSet != null) tileSet.dispose();
         if (pauseTexture != null) pauseTexture.dispose();
         if (gameOverTexture != null) gameOverTexture.dispose();
+        if (enemyIcon != null) enemyIcon.dispose();
+        if (healthIcon != null) healthIcon.dispose();
     }
 }
