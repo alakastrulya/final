@@ -202,17 +202,24 @@ public class GameScreen implements Screen {
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
 
         // 2. Карта
-        int offsetX = -17;
-        int offsetY = -17;
-        float tileScale = 0.8f;
+        int offsetX = -17, offsetY = -17;
+        float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
 
         for (MapTile tile : mapLoader.tiles) {
-            if (!tile.isSolid) continue; // если разрушен — не рисуем
-            float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
-            float drawX = tile.x * scaledSize + offsetX;
-            float drawY = tile.y * scaledSize + offsetY;
-            batch.draw(tile.region, drawX, drawY, scaledSize, scaledSize);
+            // для базы рисуем сразу 2×2 клетки
+            if (tile.isBase) {
+                float x = tile.x * scaledSize + offsetX;
+                float y = tile.y * scaledSize + offsetY;
+                batch.draw(tile.region, x, y, scaledSize * 2, scaledSize * 2);
+                continue;
+            }
+            // обычные
+            if (!tile.isSolid) continue;
+            float x = tile.x * scaledSize + offsetX;
+            float y = tile.y * scaledSize + offsetY;
+            batch.draw(tile.region, x, y, scaledSize, scaledSize);
         }
+
 
         // 3. Танки
         if (player1 != null && player1.isAlive()) {
