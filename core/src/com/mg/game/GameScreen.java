@@ -645,91 +645,142 @@ public class GameScreen implements Screen {
     private void checkKeyPress() {
         if (player1 == null || !player1.isAlive()) return;
 
-        int keycode1 = -1;
+        boolean moved = false;
+        int movementKeycode = -1;
+
+        // Обработка движения (отдельный блок if для каждого направления)
         if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            keycode1 = Input.Keys.DOWN;
+            movementKeycode = Input.Keys.DOWN;
             int newY = player1.positionY + 1;
-            if (newY <= 454 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX) && !checkMapCollision(player1.positionX, newY, player1)) {
-                player1.handleInput(keycode1, stateTime);
+            if (newY <= 454 && !checkPlayerTankCollision(player1, newY, player1.positionX) &&
+                    !checkPlayerEnemyCollision(player1, newY, player1.positionX) &&
+                    !checkMapCollision(player1.positionX, newY, player1)) {
+                player1.handleInput(movementKeycode, stateTime);
+                moved = true;
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            keycode1 = Input.Keys.UP;
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            movementKeycode = Input.Keys.UP;
             int newY = player1.positionY - 1;
-            if (newY >= 0 && !checkPlayerTankCollision(player1, newY, player1.positionX) && !checkPlayerEnemyCollision(player1, newY, player1.positionX) && !checkMapCollision(player1.positionX, newY, player1)) {
-                player1.handleInput(keycode1, stateTime);
+            if (newY >= 0 && !checkPlayerTankCollision(player1, newY, player1.positionX) &&
+                    !checkPlayerEnemyCollision(player1, newY, player1.positionX) &&
+                    !checkMapCollision(player1.positionX, newY, player1)) {
+                player1.handleInput(movementKeycode, stateTime);
+                moved = true;
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            keycode1 = Input.Keys.LEFT;
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            movementKeycode = Input.Keys.LEFT;
             int newX = player1.positionX - 1;
-            if (newX >= 0 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
-                player1.handleInput(keycode1, stateTime);
+            if (newX >= 0 && !checkPlayerTankCollision(player1, player1.positionY, newX) &&
+                    !checkPlayerEnemyCollision(player1, player1.positionY, newX) &&
+                    !checkMapCollision(newX, player1.positionY, player1)) {
+                player1.handleInput(movementKeycode, stateTime);
+                moved = true;
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            keycode1 = Input.Keys.RIGHT;
+        }
+        else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            movementKeycode = Input.Keys.RIGHT;
             int newX = player1.positionX + 1;
-            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) && !checkPlayerEnemyCollision(player1, player1.positionY, newX) && !checkMapCollision(newX, player1.positionY, player1)) {
-                player1.handleInput(keycode1, stateTime);
+            if (newX <= 454 && !checkPlayerTankCollision(player1, player1.positionY, newX) &&
+                    !checkPlayerEnemyCollision(player1, player1.positionY, newX) &&
+                    !checkMapCollision(newX, player1.positionY, player1)) {
+                player1.handleInput(movementKeycode, stateTime);
+                moved = true;
             }
-        } else if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && player1ShootCooldown <= 0) {
-            keycode1 = Input.Keys.SPACE;
-            player1.handleInput(keycode1, stateTime);
+        }
+
+        // Если не было движения и не нажата клавиша стрельбы, устанавливаем состояние покоя
+        if (!moved && !Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            player1.handleInput(-1, stateTime);
+        }
+
+        // Обработка стрельбы (отдельный блок if, независимый от движения)
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE) && player1ShootCooldown <= 0) {
+            // Сохраняем текущее направление танка
+            Tank.Direction currentDirection = player1.getDirection();
+
+            // Обрабатываем ввод для стрельбы
+            player1.handleInput(Input.Keys.SPACE, stateTime);
+
+            // Восстанавливаем направление танка (чтобы стрельба не меняла направление)
+            player1.setDirection(currentDirection);
+
             Bullet bullet = player1.shoot();
             if (bullet != null) {
                 bullets.add(bullet);
                 player1ShootCooldown = SHOOT_COOLDOWN;
             }
-        } else {
-            player1.handleInput(-1, stateTime);
         }
 
+        // Аналогичные изменения для player2
         if (player2 != null && player2.isAlive()) {
-            int keycode2 = -1;
+            boolean player2Moved = false;
+            int movementKeycode2 = -1;
+
+            // Обработка движения player2
             if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-                keycode2 = Input.Keys.DOWN;
+                movementKeycode2 = Input.Keys.DOWN;
                 int newY = player2.positionY + 1;
-                if (newY <= 454
-                        && !checkPlayerTankCollision(player2, newY, player2.positionX)
-                        && !checkPlayerEnemyCollision(player2, newY, player2.positionX)
-                        && !checkMapCollision(player2.positionX, newY, player2)) {
-                    player2.handleInput(keycode2, stateTime);
+                if (newY <= 454 && !checkPlayerTankCollision(player2, newY, player2.positionX) &&
+                        !checkPlayerEnemyCollision(player2, newY, player2.positionX) &&
+                        !checkMapCollision(player2.positionX, newY, player2)) {
+                    player2.handleInput(movementKeycode2, stateTime);
+                    player2Moved = true;
                 }
-            } else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
-                keycode2 = Input.Keys.UP;
+            }
+            else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
+                movementKeycode2 = Input.Keys.UP;
                 int newY = player2.positionY - 1;
-                if (newY >= 0
-                        && !checkPlayerTankCollision(player2, newY, player2.positionX)
-                        && !checkPlayerEnemyCollision(player2, newY, player2.positionX)
-                        && !checkMapCollision(player2.positionX, newY, player2)) {
-                    player2.handleInput(keycode2, stateTime);
+                if (newY >= 0 && !checkPlayerTankCollision(player2, newY, player2.positionX) &&
+                        !checkPlayerEnemyCollision(player2, newY, player2.positionX) &&
+                        !checkMapCollision(player2.positionX, newY, player2)) {
+                    player2.handleInput(movementKeycode2, stateTime);
+                    player2Moved = true;
                 }
-            } else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
-                keycode2 = Input.Keys.LEFT;
+            }
+            else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
+                movementKeycode2 = Input.Keys.LEFT;
                 int newX = player2.positionX - 1;
-                if (newX >= 0
-                        && !checkPlayerTankCollision(player2, player2.positionY, newX)
-                        && !checkPlayerEnemyCollision(player2, player2.positionY, newX)
-                        && !checkMapCollision(newX, player2.positionY, player2)) {
-                    player2.handleInput(keycode2, stateTime);
+                if (newX >= 0 && !checkPlayerTankCollision(player2, player2.positionY, newX) &&
+                        !checkPlayerEnemyCollision(player2, player2.positionY, newX) &&
+                        !checkMapCollision(newX, player2.positionY, player2)) {
+                    player2.handleInput(movementKeycode2, stateTime);
+                    player2Moved = true;
                 }
-            } else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
-                keycode2 = Input.Keys.RIGHT;
+            }
+            else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
+                movementKeycode2 = Input.Keys.RIGHT;
                 int newX = player2.positionX + 1;
-                if (newX <= 454
-                        && !checkPlayerTankCollision(player2, player2.positionY, newX)
-                        && !checkPlayerEnemyCollision(player2, player2.positionY, newX)
-                        && !checkMapCollision(newX, player2.positionY, player2)) {
-                    player2.handleInput(keycode2, stateTime);
+                if (newX <= 454 && !checkPlayerTankCollision(player2, player2.positionY, newX) &&
+                        !checkPlayerEnemyCollision(player2, player2.positionY, newX) &&
+                        !checkMapCollision(newX, player2.positionY, player2)) {
+                    player2.handleInput(movementKeycode2, stateTime);
+                    player2Moved = true;
                 }
-            } else if (Gdx.input.isKeyPressed(Input.Keys.ENTER) && player2ShootCooldown <= 0) {
-                keycode2 = Input.Keys.SPACE;
-                player2.handleInput(keycode2, stateTime);
+            }
+
+            // Если не было движения и не нажата клавиша стрельбы, устанавливаем состояние покоя
+            if (!player2Moved && !Gdx.input.isKeyPressed(Input.Keys.ENTER)) {
+                player2.handleInput(-1, stateTime);
+            }
+
+            // Обработка стрельбы player2 (отдельный блок if)
+            if (Gdx.input.isKeyPressed(Input.Keys.ENTER) && player2ShootCooldown <= 0) {
+                // Сохраняем текущее направление танка
+                Tank.Direction currentDirection = player2.getDirection();
+
+                // Обрабатываем ввод для стрельбы
+                player2.handleInput(Input.Keys.SPACE, stateTime);
+
+                // Восстанавливаем направление танка
+                player2.setDirection(currentDirection);
+
                 Bullet bullet = player2.shoot();
                 if (bullet != null) {
                     bullets.add(bullet);
                     player2ShootCooldown = SHOOT_COOLDOWN;
                 }
-            } else {
-                player2.handleInput(-1, stateTime);
             }
         }
     }
