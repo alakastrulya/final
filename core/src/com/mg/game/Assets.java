@@ -37,6 +37,16 @@ public class Assets {
     public static Texture stageTexture;
     public static Texture[] numberTextures;
 
+    // Score screen assets
+    public static Texture[] digitTextures;
+    public static Texture hiScoreTexture;
+    public static Texture iPlayerTexture;
+    public static Texture iiPlayerTexture;
+    public static Texture ptsTexture;
+    public static Texture totalTexture;
+    public static Texture tankIconTexture;
+    public static Texture arrowTexture;
+
     // Tank animations
     private static Map<String, Animation<TextureRegion>> movingForwardAnimations = new HashMap<>();
     private static Map<String, Animation<TextureRegion>> standByForwardAnimations = new HashMap<>();
@@ -279,6 +289,31 @@ public class Assets {
         }
     }
 
+    public static void loadScoreScreenTextures() {
+        try {
+            // Load digit textures (0-9)
+            digitTextures = new Texture[10];
+            for (int i = 0; i < 10; i++) {
+                digitTextures[i] = new Texture(Gdx.files.internal("sprites/ui/digit" + i + ".png"));
+            }
+
+            // Load text textures
+            hiScoreTexture = new Texture(Gdx.files.internal("sprites/ui/hi-score.png"));
+            iPlayerTexture = new Texture(Gdx.files.internal("sprites/ui/i-player.png"));
+            iiPlayerTexture = new Texture(Gdx.files.internal("sprites/ui/ii-player.png"));
+            ptsTexture = new Texture(Gdx.files.internal("sprites/ui/pts.png"));
+            totalTexture = new Texture(Gdx.files.internal("sprites/ui/total.png"));
+
+            // Load tank icon and arrow
+            tankIconTexture = new Texture(Gdx.files.internal("sprites/ui/tank-icon.png"));
+            arrowTexture = new Texture(Gdx.files.internal("sprites/ui/arrow.png"));
+
+            Gdx.app.log("Assets", "Score screen textures loaded successfully");
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Error loading score screen textures: " + e.getMessage());
+        }
+    }
+
     public static void loadExplosionAnimation() {
         try {
             explosionTextures = new Texture[4];
@@ -332,6 +367,20 @@ public class Assets {
                 if (texture != null) texture.dispose();
             }
         }
+
+        // Dispose score screen textures
+        if (digitTextures != null) {
+            for (Texture texture : digitTextures) {
+                if (texture != null) texture.dispose();
+            }
+        }
+        if (hiScoreTexture != null) hiScoreTexture.dispose();
+        if (iPlayerTexture != null) iPlayerTexture.dispose();
+        if (iiPlayerTexture != null) iiPlayerTexture.dispose();
+        if (ptsTexture != null) ptsTexture.dispose();
+        if (totalTexture != null) totalTexture.dispose();
+        if (tankIconTexture != null) tankIconTexture.dispose();
+        if (arrowTexture != null) arrowTexture.dispose();
 
         // Dispose all animations
         disposeAnimations();
