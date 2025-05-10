@@ -58,6 +58,7 @@ public class GameScreen implements Screen {
     // Переменные для карты
     private MapLoader mapLoader;
     private static final float TILE_SCALE = 0.87f;
+    private static final float BASE_TILE_SHIFT = MapLoader.TILE_SIZE / TILE_SCALE;
 
     public GameScreen(gdxGame game, int playerCount) {
         this.playerCount = playerCount;
@@ -201,23 +202,29 @@ public class GameScreen implements Screen {
         // 1. Фон
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
 
+
+
         // 2. Карта
         int offsetX = -17, offsetY = -17;
-        float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
+        float scaled = MapLoader.TILE_SIZE / TILE_SCALE;
+
+        float baseOffsetX = -BASE_TILE_SHIFT;
+        float baseOffsetY = -BASE_TILE_SHIFT;
 
         for (MapTile tile : mapLoader.tiles) {
-            // для базы рисуем сразу 2×2 клетки
             if (tile.isBase) {
-                float x = tile.x * scaledSize + offsetX;
-                float y = tile.y * scaledSize + offsetY;
-                batch.draw(tile.region, x, y, scaledSize * 2, scaledSize * 2);
-                continue;
+                // Рисуем базу (орла) размером 2×2 тайла
+                float x = tile.x * scaled + offsetX + baseOffsetX;
+                float y = tile.y * scaled + offsetY + baseOffsetY;
+
+                // Важно! Рисуем базу размером 2×2 тайла
+                batch.draw(tile.region, x, y, scaled * 2, scaled * 2);
+            } else if (tile.isSolid) {
+                // Обычные тайлы
+                float x = tile.x * scaled + offsetX;
+                float y = tile.y * scaled + offsetY;
+                batch.draw(tile.region, x, y, scaled, scaled);
             }
-            // обычные
-            if (!tile.isSolid) continue;
-            float x = tile.x * scaledSize + offsetX;
-            float y = tile.y * scaledSize + offsetY;
-            batch.draw(tile.region, x, y, scaledSize, scaledSize);
         }
 
 

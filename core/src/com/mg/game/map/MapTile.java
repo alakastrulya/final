@@ -50,9 +50,13 @@ public class MapTile {
         isSolid = false;
         isDestructible = false;
 
-        // Если хотите сразу менять спрайт на разрушенный (например, damagedRegion), можно раскомментировать:
-        // if (damagedRegion != null) {
-        //     this.region = new TextureRegion(damagedRegion);
-        // }
+        // Если это база (орёл), меняем текстуру на сломанную
+        if (isBase && damagedRegion != null) {
+            this.region = new TextureRegion(damagedRegion);
+        }
+        // Для обычных блоков можно также менять текстуру
+        else if (damagedRegion != null) {
+            this.region = new TextureRegion(damagedRegion);
+        }
     }
 }
