@@ -3,7 +3,6 @@ package com.mg.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -14,7 +13,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
-import com.mg.game.Bullet;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
@@ -32,6 +30,7 @@ public class GameScreen implements Screen {
     private Tank player2;
     private ArrayList<Bullet> bullets;
     private ArrayList<Tank> enemies;
+    private ArrayList<Explosion> explosions; // Added for explosion animation
     private float player1ShootCooldown = 0f;
     private float player2ShootCooldown = 0f;
     private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
@@ -71,6 +70,7 @@ public class GameScreen implements Screen {
         stateTime = 0f;
         bullets = new ArrayList<>();
         enemies = new ArrayList<>();
+        explosions = new ArrayList<>(); // Initialize explosions list
         font = new BitmapFont(true);
 
         largeFont = new BitmapFont(false);
@@ -79,7 +79,6 @@ public class GameScreen implements Screen {
         // Загружаем ресурсы для игры
         Assets.loadLevel(1);
         Assets.loadCurtainTextures();
-
 
         // Загружаем анимации для всех цветов танков перед созданием танков
         Assets.loadTankAnimations("yellow", 1);
@@ -130,6 +129,9 @@ public class GameScreen implements Screen {
         // Инициализация анимации начала уровня
         levelIntro = new LevelIntroAnimation(1); // 1 - номер уровня
         isLevelIntroPlaying = true;
+
+        // Загружаем анимацию взрыва
+        Assets.loadExplosionAnimation();
     }
 
     @Override
@@ -215,6 +217,9 @@ public class GameScreen implements Screen {
             // Обновляем снаряды и проверяем попадания
             updateBullets(delta);
 
+            // Обновляем взрывы
+            updateExplosions(delta);
+
             // Проверяем нажатия клавиш только если прошло достаточно времени
             if (moveTimer >= MOVE_DELAY) {
                 checkKeyPress();
@@ -287,7 +292,23 @@ public class GameScreen implements Screen {
         // 4. Пули
         for (Bullet bullet : bullets) {
             if (bullet.isActive() && bullet.getTexture() != null) {
-                batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
+                // Отрисовываем пулю только если она находится в пределах игровой карты
+                if (bullet.getPositionX() >= 0 && bullet.getPositionX() < 480 &&
+                        bullet.getPositionY() >= 0 && bullet.getPositionY() < 480) {
+                    batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
+                }
+            }
+        }
+
+        // 5. Взрывы
+        for (Explosion explosion : explosions) {
+            if (!explosion.isFinished()) {
+                TextureRegion frame = explosion.getCurrentFrame();
+                if (frame != null) {
+                    // Рисуем взрыв без дополнительного смещения, так как оно уже учтено в классе Explosion
+                    batch.draw(frame, explosion.getPositionX(), explosion.getPositionY(), 32, 32);
+                    Gdx.app.log("Explosion", "Рендеринг взрыва на " + explosion.getPositionX() + ", " + explosion.getPositionY());
+                }
             }
         }
 
@@ -473,6 +494,49 @@ public class GameScreen implements Screen {
             }
 
             bullet.update(delta);
+
+            // Проверяем, не вышла ли пуля за границы игровой карты (480x480)
+            boolean outOfBounds = false;
+            float explosionX = bullet.getPositionX();
+            float explosionY = bullet.getPositionY();
+
+            // Проверка правой границы (480 пикселей)
+            if (bullet.getPositionX() >= 480) {
+                outOfBounds = true;
+                explosionX = 465; // 480 - 15 (чтобы взрыв был полностью виден)
+            }
+            // Проверка левой границы
+            else if (bullet.getPositionX() < 0) {
+                outOfBounds = true;
+                explosionX = 15; // Смещаем вправо, чтобы взрыв был виден
+            }
+            // Проверка нижней границы
+            else if (bullet.getPositionY() >= 480) {
+                outOfBounds = true;
+                explosionY = 465; // 480 - 15 (чтобы взрыв был полностью виден)
+            }
+            // Проверка верхней границы
+            else if (bullet.getPositionY() < 0) {
+                outOfBounds = true;
+                explosionY = 15; // Смещаем вниз, чтобы взрыв был виден
+            }
+
+            // Если пуля вышла за границы, создаем взрыв и удаляем пулю
+            if (outOfBounds) {
+                // Создаем взрыв на границе карты, без дополнительного смещения на -14
+                // так как мы уже учли это в координатах explosionX и explosionY
+                explosions.add(new Explosion(explosionX, explosionY));
+                if (explosionSound != null) {
+                    explosionSound.play();
+                }
+                Gdx.app.log("Bullet", "Пуля вышла за границы карты, создан взрыв на " + explosionX + ", " + explosionY);
+                bullet.deactivate();
+                bullet.dispose();
+                iterator.remove();
+                continue;
+            }
+
+            // Проверяем столкновения с объектами на карте
             checkBulletCollisions(bullet);
 
             if (!bullet.isActive()) {
@@ -492,8 +556,19 @@ public class GameScreen implements Screen {
             if (tile.isSolid) {
                 Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
                 if (bulletBounds.overlaps(tileRect)) {
+                    Gdx.app.log("Collision", "Пуля столкнулась с тайлом на " + bullet.getPositionX() + ", " + bullet.getPositionY());
+
+                    // Создаем взрыв без дополнительного смещения на -14
+                    explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+
+                    // Воспроизводим звук взрыва
+                    if (explosionSound != null) {
+                        explosionSound.play();
+                    }
+
+                    Gdx.app.log("Explosion", "Добавлен взрыв на " + bullet.getPositionX() + ", " + bullet.getPositionY());
                     bullet.deactivate();
-                    return; // пуля пропадает — дальше не проверяем
+                    return;
                 }
             }
         }
@@ -501,6 +576,13 @@ public class GameScreen implements Screen {
         // 2. Коллизия с игроками
         if (bullet.isFromEnemy()) {
             if (player1 != null && player1.isAlive() && bulletBounds.overlaps(player1.getBounds())) {
+                Gdx.app.log("Collision", "Пуля столкнулась с player1 на " + bullet.getPositionX() + ", " + bullet.getPositionY());
+
+                // Создаем взрыв с правильным смещением для центрирования
+                float explosionX = bullet.getPositionX() - 14;
+                float explosionY = bullet.getPositionY() - 14;
+                explosions.add(new Explosion(explosionX, explosionY));
+
                 bullet.deactivate();
                 if (player1.takeDamage()) {
                     if (explosionSound != null) explosionSound.play();
@@ -510,6 +592,13 @@ public class GameScreen implements Screen {
             }
 
             if (player2 != null && player2.isAlive() && bulletBounds.overlaps(player2.getBounds())) {
+                Gdx.app.log("Collision", "Пуля столкнулась с player2 на " + bullet.getPositionX() + ", " + bullet.getPositionY());
+
+                // Создаем взрыв с правильным смещением для центрирования
+                float explosionX = bullet.getPositionX() - 14;
+                float explosionY = bullet.getPositionY() - 14;
+                explosions.add(new Explosion(explosionX, explosionY));
+
                 bullet.deactivate();
                 if (player2.takeDamage()) {
                     if (explosionSound != null) explosionSound.play();
@@ -521,6 +610,13 @@ public class GameScreen implements Screen {
             // 3. Коллизия с врагами
             for (Tank enemy : enemies) {
                 if (enemy != null && enemy.isAlive() && bulletBounds.overlaps(enemy.getBounds())) {
+                    Gdx.app.log("Collision", "Пуля столкнулась с врагом на " + bullet.getPositionX() + ", " + bullet.getPositionY());
+
+                    // Создаем взрыв с правильным смещением для центрирования
+                    float explosionX = bullet.getPositionX() - 14;
+                    float explosionY = bullet.getPositionY() - 14;
+                    explosions.add(new Explosion(explosionX, explosionY));
+
                     bullet.deactivate();
                     if (enemy.takeDamage()) {
                         if (explosionSound != null) explosionSound.play();
@@ -530,6 +626,18 @@ public class GameScreen implements Screen {
                     }
                     break;
                 }
+            }
+        }
+    }
+
+    private void updateExplosions(float delta) {
+        Iterator<Explosion> iterator = explosions.iterator();
+        while (iterator.hasNext()) {
+            Explosion explosion = iterator.next();
+            explosion.update(delta);
+            if (explosion.isFinished()) {
+                iterator.remove();
+                Gdx.app.log("Explosion", "Взрыв удален из списка");
             }
         }
     }
@@ -623,7 +731,6 @@ public class GameScreen implements Screen {
             } else {
                 player2.handleInput(-1, stateTime);
             }
-
         }
     }
 

@@ -47,6 +47,11 @@ public class Assets {
     private static Map<String, Animation<TextureRegion>> movingRightAnimations = new HashMap<>();
     private static Map<String, Animation<TextureRegion>> standByRightAnimations = new HashMap<>();
 
+    // Explosion animation
+    public static Animation<TextureRegion> explosionAnimation;
+    private static Texture[] explosionTextures; // Array to hold individual textures
+    private static TextureRegion[] explosionFrames;
+
     // Map assets
     public static Texture tileSet;
 
@@ -120,6 +125,7 @@ public class Assets {
         loadUITextures();
         loadCurtainTextures();
         loadStageTextures();
+        loadExplosionAnimation();
     }
 
     public static void loadLevel(int level) {
@@ -273,6 +279,33 @@ public class Assets {
         }
     }
 
+    public static void loadExplosionAnimation() {
+        try {
+            explosionTextures = new Texture[4];
+            explosionFrames = new TextureRegion[4];
+            for (int i = 0; i < 4; i++) {
+                String filePath = "sprites/effects/explosion" + (i + 1) + ".png";
+                System.out.println("этот бро  по идее должен заработать");
+                try {
+                    explosionTextures[i] = new Texture(Gdx.files.internal(filePath));
+                    explosionFrames[i] = new TextureRegion(explosionTextures[i]);
+                    // Переворачиваем текстуру по вертикали для соответствия системе координат
+                    explosionFrames[i].flip(false, true);
+                    Gdx.app.log("Assets", "Успешно загружен " + filePath);
+                } catch (Exception e) {
+                    Gdx.app.error("Assets", "Не удалось загрузить " + filePath + ": " + e.getMessage());
+                    throw e;
+                }
+            }
+            // Увеличиваем длительность кадра для лучшей видимости
+            explosionAnimation = new Animation<>(0.15f, explosionFrames);
+            Gdx.app.log("Assets", "Успешно загружена анимация взрыва с 4 кадрами");
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Ошибка загрузки анимации взрыва: " + e.getMessage());
+            explosionAnimation = null;
+        }
+    }
+
     public static void dispose() {
         if (textureBack != null) textureBack.dispose();
         if (yellowTankRight1_Texture != null) yellowTankRight1_Texture.dispose();
@@ -286,6 +319,13 @@ public class Assets {
         if (gameOverTexture != null) gameOverTexture.dispose();
         if (curtainTexture != null) curtainTexture.dispose();
         if (stageTexture != null) stageTexture.dispose();
+
+        // Dispose explosion textures
+        if (explosionTextures != null) {
+            for (Texture texture : explosionTextures) {
+                if (texture != null) texture.dispose();
+            }
+        }
 
         if (numberTextures != null) {
             for (Texture texture : numberTextures) {
