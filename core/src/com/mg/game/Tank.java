@@ -120,7 +120,7 @@ public class Tank {
         return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
     }
 
-    // Добавьте этот метод в класс Tank для улучшения AI врагов
+    // Добавьте эти методы в класс Tank для улучшения AI врагов
     public void improveEnemyAI(float delta, Tank player1, Tank player2) {
         // Обновляем таймер неуязвимости
         if (isInvulnerable()) {
@@ -193,6 +193,7 @@ public class Tank {
 
         return correctDirection;
     }
+
 
 
     public void chooseRandomDirection() {
