@@ -3,13 +3,11 @@ package com.mg.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+
 import com.badlogic.gdx.utils.Align;
 
 public class LevelCompleteScreen implements Screen {
@@ -69,36 +67,42 @@ public class LevelCompleteScreen implements Screen {
         font = new BitmapFont(true);
         font.getData().setScale(2f);
     }
+    private Texture flip(String path) {
+        Texture tex = new Texture(Gdx.files.internal(path));
+        TextureRegion reg = new TextureRegion(tex);
+        reg.flip(false, true);
+        Pixmap pixmap = reg.getTexture().getTextureData().consumePixmap();
+        Texture flipped = new Texture(pixmap);
+        pixmap.dispose();
+        tex.dispose();
+        return flipped;
+    }
+
 
     private void loadTextures() {
         try {
-            // Create a black background texture
             backgroundTexture = createColorTexture(Color.BLACK);
 
-            // Load digit textures (0-9)
             digitTextures = new Texture[10];
             for (int i = 0; i < 10; i++) {
-                digitTextures[i] = new Texture(Gdx.files.internal("sprites/ui/digit" + i + ".png"));
+                digitTextures[i] = flip("sprites/ui/digit" + i + ".png");
             }
 
-            // Load text textures
-            hiScoreTexture = new Texture(Gdx.files.internal("sprites/ui/hi-score.png"));
-            stageTexture = new Texture(Gdx.files.internal("sprites/ui/stage.png"));
-            player1Texture = new Texture(Gdx.files.internal("sprites/ui/i-player.png"));
-            player2Texture = new Texture(Gdx.files.internal("sprites/ui/ii-player.png"));
-            ptsTexture = new Texture(Gdx.files.internal("sprites/ui/pts.png"));
-            totalTexture = new Texture(Gdx.files.internal("sprites/ui/total.png"));
+            hiScoreTexture = flip("sprites/ui/hi-score.png");
+            stageTexture = flip("sprites/ui/stage.png");
+            player1Texture = flip("sprites/ui/i-player.png");
+            player2Texture = flip("sprites/ui/ii-player.png");
+            ptsTexture = flip("sprites/ui/pts.png");
+            totalTexture = flip("sprites/ui/total.png");
+            tankIconTexture = flip("sprites/ui/tank-icon.png");
+            arrowTexture = flip("sprites/ui/arrow.png");
 
-            // Load tank icon and arrow
-            tankIconTexture = new Texture(Gdx.files.internal("sprites/ui/tank-icon.png"));
-            arrowTexture = new Texture(Gdx.files.internal("sprites/ui/arrow.png"));
-
-            Gdx.app.log("LevelCompleteScreen", "All textures loaded successfully");
+            Gdx.app.log("LevelCompleteScreen", "All textures loaded and flipped.");
         } catch (Exception e) {
             Gdx.app.error("LevelCompleteScreen", "Error loading textures: " + e.getMessage());
-            // We'll use the font as fallback if textures fail to load
         }
     }
+
 
     private Texture createColorTexture(Color color) {
         com.badlogic.gdx.graphics.Pixmap pixmap = new com.badlogic.gdx.graphics.Pixmap(1, 1, com.badlogic.gdx.graphics.Pixmap.Format.RGBA8888);
@@ -109,6 +113,7 @@ public class LevelCompleteScreen implements Screen {
         return texture;
     }
 
+
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(0, 0, 0, 1);
@@ -116,7 +121,6 @@ public class LevelCompleteScreen implements Screen {
         camera.update();
         stateTime += delta;
 
-        // Update animation stage
         if (stateTime > nextAnimationTime && animationStage < 10) {
             animationStage++;
             nextAnimationTime = stateTime + animationDelay;
@@ -125,93 +129,52 @@ public class LevelCompleteScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // Draw black background
         batch.draw(backgroundTexture, 0, 0, 640, 480);
 
-        // Draw HI-SCORE
-        if (hiScoreTexture != null) {
+        if (hiScoreTexture != null && animationStage >= 1) {
             batch.setColor(Color.RED);
             batch.draw(hiScoreTexture, 100, 20, 200, 30);
             batch.setColor(Color.ORANGE);
             drawNumber(hiScore, 400, 20, 5, 30, 30);
-        } else {
-            font.setColor(Color.RED);
-            font.draw(batch, "HI-SCORE", 100, 35);
-            font.setColor(Color.ORANGE);
-            font.draw(batch, String.valueOf(hiScore), 400, 35);
         }
 
-        // Draw STAGE
-        if (animationStage >= 1) {
-            if (stageTexture != null) {
-                batch.setColor(Color.WHITE);
-                batch.draw(stageTexture, 240, 70, 120, 30);
-                drawNumber(currentLevel, 380, 70, 1, 30, 30);
-            } else {
-                font.setColor(Color.WHITE);
-                font.draw(batch, "STAGE " + currentLevel, 240, 85);
-            }
+        if (stageTexture != null && animationStage >= 2) {
+            batch.setColor(Color.WHITE);
+            batch.draw(stageTexture, 240, 70, 120, 30);
+            drawNumber(currentLevel, 380, 70, 1, 30, 30);
         }
 
-        // Draw I-PLAYER
-        if (animationStage >= 2) {
-            if (player1Texture != null) {
-                batch.setColor(Color.RED);
-                batch.draw(player1Texture, 100, 120, 200, 30);
-                batch.setColor(Color.ORANGE);
-                drawNumber(player1Score, 180, 170, 4, 25, 25);
-            } else {
-                font.setColor(Color.RED);
-                font.draw(batch, "I-PLAYER", 100, 135);
-                font.setColor(Color.ORANGE);
-                font.draw(batch, String.valueOf(player1Score), 180, 185);
-            }
+        if (player1Texture != null && animationStage >= 3) {
+            batch.setColor(Color.RED);
+            batch.draw(player1Texture, 100, 120, 200, 30);
+            batch.setColor(Color.ORANGE);
+            drawNumber(player1Score, 180, 170, 4, 25, 25);
         }
 
-        // Draw II-PLAYER if in two player mode
-        if (twoPlayerMode && animationStage >= 3) {
-            if (player2Texture != null) {
-                batch.setColor(Color.RED);
-                batch.draw(player2Texture, 400, 120, 200, 30);
-                batch.setColor(Color.ORANGE);
-                drawNumber(player2Score, 480, 170, 4, 25, 25);
-            } else {
-                font.setColor(Color.RED);
-                font.draw(batch, "II-PLAYER", 400, 135);
-                font.setColor(Color.ORANGE);
-                font.draw(batch, String.valueOf(player2Score), 480, 185);
-            }
+        if (twoPlayerMode && player2Texture != null && animationStage >= 4) {
+            batch.setColor(Color.RED);
+            batch.draw(player2Texture, 400, 120, 200, 30);
+            batch.setColor(Color.ORANGE);
+            drawNumber(player2Score, 480, 170, 4, 25, 25);
         }
 
-        // Draw points breakdown for player 1
-        if (animationStage >= 4) {
+        if (animationStage >= 5) {
             drawPointsBreakdown(player1PointsBreakdown, tankCounts, 100, 220, true);
         }
 
-        // Draw points breakdown for player 2 if in two player mode
-        if (twoPlayerMode && animationStage >= 5) {
+        if (twoPlayerMode && animationStage >= 6) {
             drawPointsBreakdown(player2PointsBreakdown, tankCounts, 400, 220, false);
         }
 
-        // Draw TOTAL
-        if (animationStage >= 6) {
-            if (totalTexture != null) {
-                batch.setColor(Color.WHITE);
-                batch.draw(totalTexture, 100, 420, 120, 30);
+        if (totalTexture != null && animationStage >= 7) {
+            batch.setColor(Color.WHITE);
+            batch.draw(totalTexture, 100, 420, 120, 30);
+            if (twoPlayerMode) {
                 batch.draw(totalTexture, 400, 420, 120, 30);
-            } else {
-                font.setColor(Color.WHITE);
-                font.draw(batch, "TOTAL", 100, 435);
-                if (twoPlayerMode) {
-                    font.draw(batch, "TOTAL", 400, 435);
-                }
             }
         }
 
-        // Check for key press to continue
-        if (animationStage >= 7 && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||
-                Gdx.input.isKeyJustPressed(Input.Keys.SPACE))) {
-            // Go to next level or back to menu
+        if (animationStage >= 8 && (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) || Gdx.input.isKeyJustPressed(Input.Keys.SPACE))) {
             if (currentLevel < 8) {
                 game.setScreen(new GameScreen(game, twoPlayerMode ? 2 : 1, currentLevel + 1));
             } else {

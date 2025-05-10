@@ -33,17 +33,17 @@ public class GameScreen implements Screen {
     private ArrayList<Explosion> explosions; // Added for explosion animation
     private float player1ShootCooldown = 0f;
     private float player2ShootCooldown = 0f;
-    private static final float SHOOT_COOLDOWN = 0.5f; // Задержка между выстрелами в секундах
+    private static final float SHOOT_COOLDOWN = 0.3f; // Задержка между выстрелами в секундах
     private LevelIntroAnimation levelIntro;
     private boolean isLevelIntroPlaying = true;
 
     // Переменные для контроля скорости движения
     private float moveTimer = 0f;
-    private static final float MOVE_DELAY = 0.01f; // Уменьшенная задержка для более быстрого движения
+    private static final float MOVE_DELAY = 0.005f;
 
     // Переменная для контроля движения врагов
     private float enemyMoveTimer = 0f;
-    private static final float ENEMY_MOVE_DELAY = 0.01f; // Такая же задержка как у игрока
+    private static final float ENEMY_MOVE_DELAY = 0.04f;
 
     // Переменные для отслеживания состояния игры
     private int score = 0;
@@ -1151,7 +1151,7 @@ public class GameScreen implements Screen {
                 // Обработка движения для первого игрока (WASD)
                 if (Gdx.input.isKeyPressed(Input.Keys.S)) {
                     movementKeycode = Input.Keys.DOWN;
-                    int newY = player1.positionY + 1;
+                    int newY = player1.positionY + 3;
                     if (newY <= 454 && !checkCollisionWithTank(player1, player1.positionX, newY) &&
                             !checkCollisionWithEnemy(player1, player1.positionX, newY) &&
                             !checkCollisionWithMap(player1.positionX, newY, player1)) {
@@ -1161,7 +1161,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.W)) {
                     movementKeycode = Input.Keys.UP;
-                    int newY = player1.positionY - 1;
+                    int newY = player1.positionY - 3;
                     if (newY >= 0 && !checkCollisionWithTank(player1, player1.positionX, newY) &&
                             !checkCollisionWithEnemy(player1, player1.positionX, newY) &&
                             !checkCollisionWithMap(player1.positionX, newY, player1)) {
@@ -1171,7 +1171,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.A)) {
                     movementKeycode = Input.Keys.LEFT;
-                    int newX = player1.positionX - 1;
+                    int newX = player1.positionX - 3;
                     if (newX >= 0 && !checkCollisionWithTank(player1, newX, player1.positionY) &&
                             !checkCollisionWithEnemy(player1, newX, player1.positionY) &&
                             !checkCollisionWithMap(newX, player1.positionY, player1)) {
@@ -1181,7 +1181,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.D)) {
                     movementKeycode = Input.Keys.RIGHT;
-                    int newX = player1.positionX + 1;
+                    int newX = player1.positionX + 3;
                     if (newX <= 454 && !checkCollisionWithTank(player1, newX, player1.positionY) &&
                             !checkCollisionWithEnemy(player1, newX, player1.positionY) &&
                             !checkCollisionWithMap(newX, player1.positionY, player1)) {
@@ -1195,7 +1195,7 @@ public class GameScreen implements Screen {
                 // Обработка движения для первого игрока (стрелочки)
                 if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
                     movementKeycode = Input.Keys.DOWN;
-                    int newY = player1.positionY + 1;
+                    int newY = player1.positionY + 3;
                     if (newY <= 454 && !checkCollisionWithTank(player1, player1.positionX, newY) &&
                             !checkCollisionWithEnemy(player1, player1.positionX, newY) &&
                             !checkCollisionWithMap(player1.positionX, newY, player1)) {
@@ -1205,7 +1205,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
                     movementKeycode = Input.Keys.UP;
-                    int newY = player1.positionY - 1;
+                    int newY = player1.positionY - 3;
                     if (newY >= 0 && !checkCollisionWithTank(player1, player1.positionX, newY) &&
                             !checkCollisionWithEnemy(player1, player1.positionX, newY) &&
                             !checkCollisionWithMap(player1.positionX, newY, player1)) {
@@ -1215,7 +1215,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                     movementKeycode = Input.Keys.LEFT;
-                    int newX = player1.positionX - 1;
+                    int newX = player1.positionX - 3;
                     if (newX >= 0 && !checkCollisionWithTank(player1, newX, player1.positionY) &&
                             !checkCollisionWithEnemy(player1, newX, player1.positionY) &&
                             !checkCollisionWithMap(newX, player1.positionY, player1)) {
@@ -1225,7 +1225,7 @@ public class GameScreen implements Screen {
                 }
                 else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
                     movementKeycode = Input.Keys.RIGHT;
-                    int newX = player1.positionX + 1;
+                    int newX = player1.positionX + 3;
                     if (newX <= 454 && !checkCollisionWithTank(player1, newX, player1.positionY) &&
                             !checkCollisionWithEnemy(player1, newX, player1.positionY) &&
                             !checkCollisionWithMap(newX, player1.positionY, player1)) {

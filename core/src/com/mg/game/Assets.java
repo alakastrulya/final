@@ -169,32 +169,32 @@ public class Assets {
             TextureRegion standByForwardFrame = new TextureRegion(forward1, 0, 0, 13, 13);
             movingForwardSheetFrames[0] = new TextureRegion(forward1, 0, 0, 13, 13);
             movingForwardSheetFrames[1] = new TextureRegion(forward2, 0, 0, 13, 13);
-            movingForwardAnimations.put(colour, new Animation<>(0.1F, movingForwardSheetFrames));
-            standByForwardAnimations.put(colour, new Animation<>(0.1F, standByForwardFrame));
+            movingForwardAnimations.put(colour, new Animation<>(0.05F, movingForwardSheetFrames));
+            standByForwardAnimations.put(colour, new Animation<>(0.05F, standByForwardFrame));
 
             // Create backward animations
             TextureRegion[] movingBackwardSheetFrames = new TextureRegion[2];
             TextureRegion standByBackwardFrame = new TextureRegion(backward1, 0, 0, 13, 13);
             movingBackwardSheetFrames[0] = new TextureRegion(backward1, 0, 0, 13, 13);
             movingBackwardSheetFrames[1] = new TextureRegion(backward2, 0, 0, 13, 13);
-            movingBackwardAnimations.put(colour, new Animation<>(0.1F, movingBackwardSheetFrames));
-            standByBackwardAnimations.put(colour, new Animation<>(0.1F, standByBackwardFrame));
+            movingBackwardAnimations.put(colour, new Animation<>(0.05F, movingBackwardSheetFrames));
+            standByBackwardAnimations.put(colour, new Animation<>(0.05F, standByBackwardFrame));
 
             // Create left animations
             TextureRegion[] movingLeftSheetFrames = new TextureRegion[2];
             TextureRegion standByLeftFrame = new TextureRegion(left1, 0, 0, 13, 13);
             movingLeftSheetFrames[0] = new TextureRegion(left1, 0, 0, 13, 13);
             movingLeftSheetFrames[1] = new TextureRegion(left2, 0, 0, 13, 13);
-            movingLeftAnimations.put(colour, new Animation<>(0.1F, movingLeftSheetFrames));
-            standByLeftAnimations.put(colour, new Animation<>(0.1F, standByLeftFrame));
+            movingLeftAnimations.put(colour, new Animation<>(0.05F, movingLeftSheetFrames));
+            standByLeftAnimations.put(colour, new Animation<>(0.05F, standByLeftFrame));
 
             // Create right animations
             TextureRegion[] movingRightSheetFrames = new TextureRegion[2];
             TextureRegion standByRightFrame = new TextureRegion(right1, 0, 0, 13, 13);
             movingRightSheetFrames[0] = new TextureRegion(right1, 0, 0, 13, 13);
             movingRightSheetFrames[1] = new TextureRegion(right2, 0, 0, 13, 13);
-            movingRightAnimations.put(colour, new Animation<>(0.1F, movingRightSheetFrames));
-            standByRightAnimations.put(colour, new Animation<>(0.1F, standByRightFrame));
+            movingRightAnimations.put(colour, new Animation<>(0.05F, movingRightSheetFrames));
+            standByRightAnimations.put(colour, new Animation<>(0.05F, standByRightFrame));
 
             Gdx.app.log("Assets", "Successfully loaded animations for " + colour + " tank");
         } catch (Exception e) {
@@ -291,28 +291,42 @@ public class Assets {
 
     public static void loadScoreScreenTextures() {
         try {
-            // Load digit textures (0-9)
+            // Load digit textures (0–9) and flip vertically
             digitTextures = new Texture[10];
             for (int i = 0; i < 10; i++) {
-                digitTextures[i] = new Texture(Gdx.files.internal("sprites/ui/digit" + i + ".png"));
+                TextureRegion region = new TextureRegion(new Texture(Gdx.files.internal("sprites/ui/digit" + i + ".png")));
+                region.flip(false, true);
+                Pixmap pixmap = region.getTexture().getTextureData().consumePixmap();
+                digitTextures[i] = new Texture(pixmap);
+                pixmap.dispose();
             }
 
-            // Load text textures
-            hiScoreTexture = new Texture(Gdx.files.internal("sprites/ui/hi-score.png"));
-            iPlayerTexture = new Texture(Gdx.files.internal("sprites/ui/i-player.png"));
-            iiPlayerTexture = new Texture(Gdx.files.internal("sprites/ui/ii-player.png"));
-            ptsTexture = new Texture(Gdx.files.internal("sprites/ui/pts.png"));
-            totalTexture = new Texture(Gdx.files.internal("sprites/ui/total.png"));
+            // Flip all UI textures vertically using TextureRegion
+            hiScoreTexture = flip("sprites/ui/hi-score.png");
+            iPlayerTexture = flip("sprites/ui/i-player.png");
+            iiPlayerTexture = flip("sprites/ui/ii-player.png");
+            ptsTexture = flip("sprites/ui/pts.png");
+            totalTexture = flip("sprites/ui/total.png");
+            tankIconTexture = flip("sprites/ui/tank-icon.png");
+            arrowTexture = flip("sprites/ui/arrow.png");
 
-            // Load tank icon and arrow
-            tankIconTexture = new Texture(Gdx.files.internal("sprites/ui/tank-icon.png"));
-            arrowTexture = new Texture(Gdx.files.internal("sprites/ui/arrow.png"));
-
-            Gdx.app.log("Assets", "Score screen textures loaded successfully");
+            Gdx.app.log("Assets", "Score screen textures flipped and loaded.");
         } catch (Exception e) {
             Gdx.app.error("Assets", "Error loading score screen textures: " + e.getMessage());
         }
     }
+
+    public static Texture flip(String path) {
+        Texture tex = new Texture(Gdx.files.internal(path));
+        TextureRegion reg = new TextureRegion(tex);
+        reg.flip(false, true);
+        Pixmap pixmap = reg.getTexture().getTextureData().consumePixmap();
+        Texture flipped = new Texture(pixmap);
+        pixmap.dispose();
+        tex.dispose();
+        return flipped;
+    }
+
 
     public static void loadExplosionAnimation() {
         try {
