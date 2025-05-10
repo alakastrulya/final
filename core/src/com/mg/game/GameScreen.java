@@ -68,6 +68,15 @@ public class GameScreen implements Screen {
     // Текущий уровень
     private int currentLevel;
 
+    // Add these fields to the GameScreen class
+    private static final int MAX_ENEMIES_ON_MAP = 3;
+    private static final int TOTAL_ENEMIES_PER_LEVEL = 10;
+    private int remainingEnemies = TOTAL_ENEMIES_PER_LEVEL - MAX_ENEMIES_ON_MAP;
+    private float enemyRespawnTimer = 0f;
+    private static final float ENEMY_RESPAWN_DELAY = 3.0f; // Seconds between enemy respawns
+    private int baseX = 320; // X coordinate of the base (adjust as needed)
+    private int baseY = 440; // Y coordinate of the base (adjust as needed)
+
     public GameScreen(gdxGame game, int playerCount) {
         this(game, playerCount, 1); // По умолчанию начинаем с уровня 1
     }
@@ -133,8 +142,10 @@ public class GameScreen implements Screen {
         // Инициализация карты
         mapLoader = new MapLoader();
 
-        // Инициализация вражеских танков
-        for (int i = 0; i < 3; i++) {
+        this.remainingEnemies = TOTAL_ENEMIES_PER_LEVEL - MAX_ENEMIES_ON_MAP;
+
+        // Initialize only MAX_ENEMIES_ON_MAP enemies initially
+        for (int i = 0; i < MAX_ENEMIES_ON_MAP; i++) {
             Tank enemy = new Tank("red", 1, true);
             int[] spawn = findFreeSpawnPoint(50 + i * 60, 50, 16);
             enemy.positionX = spawn[0];
@@ -211,7 +222,7 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Если и��рает анимация начала уровня
+        // Если играет анимация начала уровня
         if (isLevelIntroPlaying) {
             levelIntro.update(delta);
 
@@ -452,7 +463,7 @@ public class GameScreen implements Screen {
     }
 
     private void checkLevelComplete() {
-        // Проверяем, все ли враги уничтожены
+        // Level is complete when all enemies are defeated (both on map and remaining to spawn)
         boolean enemiesDefeated = true;
         for (Tank enemy : enemies) {
             if (enemy != null && enemy.isAlive()) {
@@ -461,32 +472,74 @@ public class GameScreen implements Screen {
             }
         }
 
-        // Если все враги уничтожены и уровень еще не отмечен как завершенный
-        if (enemiesDefeated && !levelComplete && !gameOver) {
+        // If all enemies on map are defeated and no more enemies to spawn
+        if (enemiesDefeated && remainingEnemies <= 0 && !levelComplete && !gameOver) {
             levelComplete = true;
             levelCompleteTimer = 0f;
         }
     }
 
+// Update the updateEnemies method to use the new improveEnemyAI method instead of updateEnemy
+
     private void updateEnemies(float delta) {
+        // Check if we need to respawn enemies
+        if (enemies.size() < MAX_ENEMIES_ON_MAP && remainingEnemies > 0) {
+            enemyRespawnTimer += delta;
+            if (enemyRespawnTimer >= ENEMY_RESPAWN_DELAY) {
+                spawnNewEnemy();
+                enemyRespawnTimer = 0f;
+                remainingEnemies--;
+            }
+        }
+
         for (Tank enemy : enemies) {
             if (enemy == null || !enemy.isAlive()) continue;
 
-            Bullet bullet = enemy.updateEnemy(delta, player1, player2);
-            if (bullet != null) {
-                bullets.add(bullet);
+            // Используем улучшенный AI
+            enemy.improveEnemyAI(delta, player1, player2);
+
+            // Выбираем цель и направление движения
+            if (Math.random() < 0.02) { // 2% шанс изменить направление
+                // Выбираем цель: игрок или база
+                boolean targetBase = Math.random() < 0.3; // 30% шанс целиться в базу, 70% в игрока
+
+                Tank targetPlayer = null;
+                if (player1 != null && player1.isAlive()) {
+                    targetPlayer = player1;
+                } else if (player2 != null && player2.isAlive()) {
+                    targetPlayer = player2;
+                }
+
+                // Если нет живых игроков, целимся в базу
+                if (targetPlayer == null) {
+                    targetBase = true;
+                }
+
+                int targetX, targetY;
+                if (targetBase) {
+                    targetX = baseX;
+                    targetY = baseY;
+                } else {
+                    targetX = targetPlayer.positionX;
+                    targetY = targetPlayer.positionY;
+                }
+
+                // Определяем направление движения к цели
+                chooseDirectionTowardsTarget(enemy, targetX, targetY);
             }
 
+            // Пробуем двигаться в текущем направлении
             int newX = enemy.positionX;
             int newY = enemy.positionY;
             int keycode = -1;
 
+            // Определяем новые координаты в зависимости от направления
             switch (enemy.getDirection()) {
-                case FORWARD:
+                case FORWARD: // Вверх (в перевернутой системе координат это -Y)
                     newY = enemy.positionY - 1;
                     keycode = Input.Keys.UP;
                     break;
-                case BACKWARD:
+                case BACKWARD: // Вниз (в перевернутой системе координат это +Y)
                     newY = enemy.positionY + 1;
                     keycode = Input.Keys.DOWN;
                     break;
@@ -500,6 +553,7 @@ public class GameScreen implements Screen {
                     break;
             }
 
+            // Проверяем, можем ли мы двигаться в этом направлении
             boolean canMove = true;
             if (newY >= 0 && newY <= 454 && newX >= 0 && newX <= 454) {
                 if (checkCollisionWithPlayer(enemy, newX, newY)) {
@@ -511,35 +565,113 @@ public class GameScreen implements Screen {
                 canMove = false;
             }
 
+            // Если можем двигаться, обновляем позицию
             if (canMove) {
-                switch (enemy.getDirection()) {
-                    case FORWARD:
-                        enemy.moveUp();
-                        break;
-                    case BACKWARD:
-                        enemy.moveDown();
-                        break;
-                    case LEFT:
-                        enemy.moveLeft();
-                        break;
-                    case RIGHT:
-                        enemy.moveRight();
-                        break;
-                }
+                // ВАЖНО: Фактически перемещаем танк
+                enemy.positionX = newX;
+                enemy.positionY = newY;
+
+                // Обрабатываем ввод для анимации
                 try {
                     enemy.handleInput(keycode, stateTime);
                 } catch (Exception e) {
                     Gdx.app.error("GameScreen", "Error handling input for enemy: " + e.getMessage());
                 }
             } else {
-                enemy.chooseRandomDirection();
+                // Если не можем двигаться, выбираем другое направление
+                chooseAlternateDirection(enemy);
                 try {
                     enemy.handleInput(-1, stateTime);
                 } catch (Exception e) {
                     Gdx.app.error("GameScreen", "Error handling input for enemy: " + e.getMessage());
                 }
             }
+
+            // Добавляем случайную стрельбу
+            if (Math.random() < 0.005) { // 0.5% шанс выстрелить
+                Bullet bullet = enemy.shoot();
+                if (bullet != null) {
+                    bullets.add(bullet);
+                }
+            }
         }
+    }
+
+    // Улучшенный метод выбора направления к цели
+    private void chooseDirectionTowardsTarget(Tank enemy, int targetX, int targetY) {
+        // Вычисляем расстояние до цели по горизонтали и вертикали
+        int dx = targetX - enemy.positionX;
+        int dy = targetY - enemy.positionY;
+
+        // Решаем, двигаться ли по горизонтали или вертикали
+        // Добавляем случайность для более естественного движения
+        boolean moveHorizontally = Math.abs(dx) > Math.abs(dy) || Math.random() < 0.3;
+
+        if (moveHorizontally) {
+            // Двигаемся по горизонтали
+            if (dx > 0) {
+                enemy.setDirection(Tank.Direction.RIGHT);
+            } else {
+                enemy.setDirection(Tank.Direction.LEFT);
+            }
+        } else {
+            // Двигаемся по вертикали (учитываем перевернутую систему координат)
+            if (dy > 0) {
+                enemy.setDirection(Tank.Direction.BACKWARD); // Вниз
+            } else {
+                enemy.setDirection(Tank.Direction.FORWARD); // Вверх
+            }
+        }
+    }
+
+    // Улучшенный метод выбора альтернативного направления
+    private void chooseAlternateDirection(Tank enemy) {
+        // Получаем текущее направление
+        Tank.Direction currentDir = enemy.getDirection();
+
+        // Выбираем направление, отличное от текущего
+        // Предпочитаем перпендикулярные направления для более естественного обхода препятствий
+        Tank.Direction newDir;
+
+        if (currentDir == Tank.Direction.LEFT || currentDir == Tank.Direction.RIGHT) {
+            // Если двигались горизонтально, пробуем вертикально
+            newDir = Math.random() < 0.5 ? Tank.Direction.FORWARD : Tank.Direction.BACKWARD;
+        } else {
+            // Если двигались вертикально, пробуем горизонтально
+            newDir = Math.random() < 0.5 ? Tank.Direction.LEFT : Tank.Direction.RIGHT;
+        }
+
+        enemy.setDirection(newDir);
+    }
+
+    // Add this method to spawn a new enemy
+    private void spawnNewEnemy() {
+        // Choose one of three spawn points randomly
+        int spawnPoint = (int)(Math.random() * 3);
+        int spawnX;
+
+        switch (spawnPoint) {
+            case 0:
+                spawnX = 50; // Left spawn
+                break;
+            case 1:
+                spawnX = 320; // Middle spawn
+                break;
+            case 2:
+                spawnX = 590; // Right spawn
+                break;
+            default:
+                spawnX = 320;
+        }
+
+        Tank enemy = new Tank("red", 1, true);
+        int[] spawn = findFreeSpawnPoint(spawnX, 50, 16);
+        enemy.positionX = spawn[0];
+        enemy.positionY = spawn[1];
+        enemies.add(enemy);
+
+        Gdx.app.log("GameScreen", "Spawned new enemy at " + spawn[0] + ", " + spawn[1] +
+                ". Remaining: " + remainingEnemies);
     }
 
     private boolean checkCollisionWithPlayer(Tank enemy, int newX, int newY) {

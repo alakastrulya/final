@@ -120,23 +120,80 @@ public class Tank {
         return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
     }
 
-    public Bullet updateEnemy(float delta, Tank player1, Tank player2) {
-        // Обновляем таймер стрельбы
-        shootTimer -= delta;
-
-        // Случайно меняем направление (с небольшой вероятностью)
-        if (random.nextFloat() < 0.01) {
-            chooseRandomDirection();
+    // Добавьте этот метод в класс Tank для улучшения AI врагов
+    public void improveEnemyAI(float delta, Tank player1, Tank player2) {
+        // Обновляем таймер неуязвимости
+        if (isInvulnerable()) {
+            invulnerabilityTimer -= delta;
         }
 
-        // Стреляем, если прошло достаточно времени
-        if (shootTimer <= 0) {
-            shootTimer = SHOOT_DELAY;
-            return shoot();
+        // Продолжаем только если это вражеский танк
+        if (!isEnemy) {
+            return;
         }
 
-        return null;
+        // Проверяем, есть ли игрок на линии огня
+        Tank targetPlayer = null;
+
+        if (player1 != null && player1.isAlive()) {
+            if (isInLineOfSight(player1)) {
+                targetPlayer = player1;
+            }
+        }
+
+        if (targetPlayer == null && player2 != null && player2.isAlive()) {
+            if (isInLineOfSight(player2)) {
+                targetPlayer = player2;
+            }
+        }
+
+        // Если игрок на линии огня, увеличиваем шанс выстрела
+        if (targetPlayer != null && Math.random() < 0.1) { // 10% шанс выстрелить, когда игрок на линии огня
+            shoot();
+        }
     }
+
+    // Добавьте этот метод для проверки, находится ли игрок на линии огня
+    private boolean isInLineOfSight(Tank player) {
+        // Проверяем, находится ли игрок в том же ряду или колонке
+        boolean sameRow = Math.abs(this.positionY - player.positionY) < 10;
+        boolean sameColumn = Math.abs(this.positionX - player.positionX) < 10;
+
+        if (!sameRow && !sameColumn) {
+            return false;
+        }
+
+        // Определяем направление для проверки
+        int dx = 0;
+        int dy = 0;
+
+        if (sameRow) {
+            dx = (player.positionX > this.positionX) ? 1 : -1;
+        } else {
+            dy = (player.positionY > this.positionY) ? 1 : -1;
+        }
+
+        // Проверяем, соответствует ли текущее направление линии огня
+        boolean correctDirection = false;
+
+        switch (direction) {
+            case RIGHT:
+                correctDirection = (dx > 0);
+                break;
+            case LEFT:
+                correctDirection = (dx < 0);
+                break;
+            case BACKWARD:
+                correctDirection = (dy > 0);
+                break;
+            case FORWARD:
+                correctDirection = (dy < 0);
+                break;
+        }
+
+        return correctDirection;
+    }
+
 
     public void chooseRandomDirection() {
         int dir = random.nextInt(4);
@@ -260,4 +317,6 @@ public class Tank {
     public void setHealth(int health) {
         this.health = health;
     }
+
+
 }
