@@ -59,6 +59,7 @@ public class GameScreen implements Screen {
     // Переменные для карты
     private MapLoader mapLoader;
     private static final float TILE_SCALE = 0.87f;
+    private static final float BASE_TILE_SHIFT = MapLoader.TILE_SIZE / TILE_SCALE;
 
     // Переменные для отслеживания завершения уровня
     private boolean levelComplete = false;
@@ -164,14 +165,14 @@ public class GameScreen implements Screen {
 
         // Инициализация первого танка
         player1 = new Tank("yellow", 1, false);
-        player1.positionX = 160;
+        player1.positionX = 152;
         player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
             player2 = new Tank("green", 1, false);
-            player2.positionX = 290;
+            player2.positionX = 299;
             player2.positionY = 450;
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
         }
@@ -387,23 +388,31 @@ public class GameScreen implements Screen {
         // 1. Фон
         batch.draw(Assets.levelBack, 0, 0, 480, 480);
 
+
+
         // 2. Карта
-        int offsetX = -17;
-        int offsetY = -17;
-        float tileScale = 0.8f;
+        int offsetX = -17, offsetY = -17;
+        float scaled = MapLoader.TILE_SIZE / TILE_SCALE;
+
+        float baseOffsetX = -BASE_TILE_SHIFT;
+        float baseOffsetY = -BASE_TILE_SHIFT;
 
         for (MapTile tile : mapLoader.tiles) {
-            float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
-            float drawX = tile.x * scaledSize + offsetX;
-            float drawY = tile.y * scaledSize + offsetY;
-            batch.draw(
-                    tile.region,
-                    drawX,
-                    drawY,
-                    scaledSize,
-                    scaledSize
-            );
+            if (tile.isBase) {
+                // Рисуем базу (орла) размером 2×2 тайла
+                float x = tile.x * scaled + offsetX + baseOffsetX;
+                float y = tile.y * scaled + offsetY + baseOffsetY;
+
+                // Важно! Рисуем базу размером 2×2 тайла
+                batch.draw(tile.region, x, y, scaled * 2, scaled * 2);
+            } else if (tile.isSolid) {
+                // Обычные тайлы
+                float x = tile.x * scaled + offsetX;
+                float y = tile.y * scaled + offsetY;
+                batch.draw(tile.region, x, y, scaled, scaled);
+            }
         }
+
 
         // 3. Танки
         if (player1 != null && player1.isAlive()) {
@@ -1051,36 +1060,50 @@ public class GameScreen implements Screen {
 
         // 1. Коллизия с твердыми блоками карты
         for (MapTile tile : mapLoader.tiles) {
-            if (tile.isSolid) {
-                Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
-                if (bulletBounds.overlaps(tileRect)) {
-                    Gdx.app.log("Collision", "Пуля столкнулась с тайлом на " + bullet.getPositionX() + ", " + bullet.getPositionY());
+            if (!tile.isSolid) continue;
 
-                    // Создаем взрыв без дополнительного смещения на -14
-                    explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+            Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
+            if (bulletBounds.overlaps(tileRect)) {
+                // Если блок разрушаемый — наносим урон
+                if (tile.isDestructible) {
+                    tile.takeHit();
 
-                    // Воспроизводим звук взрыва
-                    if (explosionSound != null) {
-                        explosionSound.play();
+                    // Проверка на уничтожение базы
+                    if (tile.isBase && !tile.isSolid) {
+                        gameOver = true;
+                        Gdx.app.log("GameScreen", "База уничтожена! Игра окончена.");
                     }
 
-                    Gdx.app.log("Explosion", "Добавлен взрыв на " + bullet.getPositionX() + ", " + bullet.getPositionY());
-                    bullet.deactivate();
-                    return;
+                    // Повреждаем соседний блок
+                    int tx = tile.x;
+                    int ty = tile.y;
+                    for (MapTile neighbor : mapLoader.tiles) {
+                        if (!neighbor.isDestructible || !neighbor.isSolid) continue;
+
+                        boolean isNeighbor =
+                                (neighbor.x == tx && Math.abs(neighbor.y - ty) == 1) ||
+                                        (neighbor.y == ty && Math.abs(neighbor.x - tx) == 1);
+
+                        if (isNeighbor) {
+                            neighbor.takeHit();
+                            break;
+                        }
+                    }
                 }
+
+                // Взрыв
+                explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+                if (explosionSound != null) explosionSound.play();
+
+                bullet.deactivate();
+                return;
             }
         }
 
         // 2. Коллизия с игроками
         if (bullet.isFromEnemy()) {
             if (player1 != null && player1.isAlive() && bulletBounds.overlaps(player1.getBounds())) {
-                Gdx.app.log("Collision", "Пуля столкнулась с player1 на " + bullet.getPositionX() + ", " + bullet.getPositionY());
-
-                // Создаем взрыв с правильным смещением для центрирования
-                float explosionX = bullet.getPositionX() - 14;
-                float explosionY = bullet.getPositionY() - 14;
-                explosions.add(new Explosion(explosionX, explosionY));
-
+                explosions.add(new Explosion(bullet.getPositionX() - 14, bullet.getPositionY() - 14));
                 bullet.deactivate();
                 if (player1.takeDamage()) {
                     if (explosionSound != null) explosionSound.play();
@@ -1090,13 +1113,7 @@ public class GameScreen implements Screen {
             }
 
             if (player2 != null && player2.isAlive() && bulletBounds.overlaps(player2.getBounds())) {
-                Gdx.app.log("Collision", "Пуля столкнулась с player2 на " + bullet.getPositionX() + ", " + bullet.getPositionY());
-
-                // Создаем взрыв с правильным смещением для центрирования
-                float explosionX = bullet.getPositionX() - 14;
-                float explosionY = bullet.getPositionY() - 14;
-                explosions.add(new Explosion(explosionX, explosionY));
-
+                explosions.add(new Explosion(bullet.getPositionX() - 14, bullet.getPositionY() - 14));
                 bullet.deactivate();
                 if (player2.takeDamage()) {
                     if (explosionSound != null) explosionSound.play();
@@ -1108,13 +1125,7 @@ public class GameScreen implements Screen {
             // 3. Коллизия с врагами
             for (Tank enemy : enemies) {
                 if (enemy != null && enemy.isAlive() && bulletBounds.overlaps(enemy.getBounds())) {
-                    Gdx.app.log("Collision", "Пуля столкнулась с врагом на " + bullet.getPositionX() + ", " + bullet.getPositionY());
-
-                    // Создаем взрыв с правильным смещением для центрирования
-                    float explosionX = bullet.getPositionX() - 14;
-                    float explosionY = bullet.getPositionY() - 14;
-                    explosions.add(new Explosion(explosionX, explosionY));
-
+                    explosions.add(new Explosion(bullet.getPositionX() - 14, bullet.getPositionY() - 14));
                     bullet.deactivate();
                     if (enemy.takeDamage()) {
                         if (explosionSound != null) explosionSound.play();
@@ -1127,6 +1138,7 @@ public class GameScreen implements Screen {
             }
         }
     }
+
 
     private void updateExplosions(float delta) {
         Iterator<Explosion> iterator = explosions.iterator();

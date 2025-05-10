@@ -4,21 +4,21 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 
 public class MapTile {
-    public final TextureRegion region;
+    public TextureRegion region;
+    public TextureRegion damagedRegion;
     public final int x, y;
     public boolean isSolid;
-    public boolean isDestructible; // <- добавлено
+    public boolean isDestructible;
+    public boolean isBase = false; // ← база (орёл)
+    private int hitPoints = 2;
+    private TextureRegion damagedTop, damagedBottom, damagedLeft, damagedRight;
 
     public MapTile(TextureRegion region, int x, int y, boolean isSolid, boolean isDestructible) {
-        this.region = region;
+        this.region = new TextureRegion(region);
         this.x = x;
         this.y = y;
         this.isSolid = isSolid;
         this.isDestructible = isDestructible;
-    }
-
-    public MapTile(TextureRegion region, int x, int y) {
-        this(region, x, y, false, false); // по умолчанию — не solid и не разрушается
     }
 
     public Rectangle getBounds(int tileSize, float scale, int offsetX, int offsetY) {
@@ -28,8 +28,35 @@ public class MapTile {
         return new Rectangle(drawX, drawY, scaledSize, scaledSize);
     }
 
-    public int getFlippedY(int screenHeight, int tileSize) {
-        int totalTilesY = screenHeight / tileSize;
-        return totalTilesY - y - 1;
+    // старый общий сеттер, если он ещё нужен
+    public void setDamagedRegion(TextureRegion damaged) {
+        this.damagedRegion = new TextureRegion(damaged);
+    }
+
+    public void setDamagedTopRegion(TextureRegion r)    { this.damagedTop = r; }
+    public void setDamagedBottomRegion(TextureRegion r) { this.damagedBottom = r; }
+    public void setDamagedLeftRegion(TextureRegion r)   { this.damagedLeft = r; }
+    public void setDamagedRightRegion(TextureRegion r)  { this.damagedRight = r; }
+
+    // —— Добавляем этот метод ——
+    public void setBase(boolean isBase) {
+        this.isBase = isBase;
+    }
+
+    public void takeHit() {
+        if (!isDestructible) return;
+
+        // Помечаем тайл как неавтразрушаемый и проходной
+        isSolid = false;
+        isDestructible = false;
+
+        // Если это база (орёл), меняем текстуру на сломанную
+        if (isBase && damagedRegion != null) {
+            this.region = new TextureRegion(damagedRegion);
+        }
+        // Для обычных блоков можно также менять текстуру
+        else if (damagedRegion != null) {
+            this.region = new TextureRegion(damagedRegion);
+        }
     }
 }

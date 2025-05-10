@@ -20,63 +20,118 @@ public class MapLoader {
             return;
         }
 
-        String tileSheetPath = "sprites/tiles/tileset.png";
-        FileHandle sheetHandle = Gdx.files.internal(tileSheetPath);
+        FileHandle sheetHandle = Gdx.files.internal("sprites/tiles/tileset.png");
         if (!sheetHandle.exists()) {
-            Gdx.app.error("MapLoader", "Тайлсет не найден: " + tileSheetPath);
+            Gdx.app.error("MapLoader", "Тайлсет не найден: sprites/tiles/tileset.png");
             return;
         }
 
         Texture sheet = new Texture(sheetHandle);
-        int sheetW = sheet.getWidth();
-        int sheetH = sheet.getHeight();
-        int cols = sheetW / TILE_SIZE;
-        int rows = sheetH / TILE_SIZE;
-        Gdx.app.log("MapLoader", "Loaded tilesheet " + sheetW + "×" + sheetH + ", TILE_SIZE=" + TILE_SIZE + " => rows=" + rows + ", cols=" + cols);
 
-        TextureRegion[][] all = TextureRegion.split(sheet, TILE_SIZE, TILE_SIZE);
-
+        // Судя по скриншоту, орёл уже найден правильно, но нужно настроить размер
         String[] lines = mapHandle.readString().split("\\r?\\n");
-        for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
+
+        // Найдем координаты базы в карте
+        int baseMapRow = -1;
+        int baseMapCol = -1;
+
+        for (String raw : lines) {
+            String line = raw.trim();
             if (line.isEmpty()) continue;
 
             String[] parts = line.split(",");
-            if (parts.length != 4) {
-                Gdx.app.error("MapLoader", "Неправильная строка в " + mapPath + " на строке " + (i + 1) + ": " + line);
+            int mapRow = Integer.parseInt(parts[0].trim());
+            int mapCol = Integer.parseInt(parts[1].trim());
+            int tileRow = Integer.parseInt(parts[2].trim());
+            int tileCol = Integer.parseInt(parts[3].trim());
+
+            // Находим базу (орёл) в файле карты
+            if (tileRow == 2 && tileCol == 3) {
+                baseMapRow = mapRow;
+                baseMapCol = mapCol;
+                break;
+            }
+        }
+
+        // Если нашли базу, создаем для неё тайл 2×2
+        if (baseMapRow != -1 && baseMapCol != -1) {
+            // Координаты орла в тайлсете (используем те, что уже работают)
+            // Судя по скриншоту, орёл уже отображается правильно
+            int eagleSheetRow = 2; // Строка орла в тайлсете
+            int eagleSheetCol = 3; // Столбец орла в тайлсете
+
+            // Создаём текстуру орла
+            TextureRegion eagle = new TextureRegion(
+                    sheet,
+                    eagleSheetCol * TILE_SIZE,
+                    eagleSheetRow * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+            );
+
+            // Создаём текстуру сломанного орла
+            TextureRegion broken = new TextureRegion(
+                    sheet,
+                    (eagleSheetCol + 1) * TILE_SIZE, // Предполагаем, что сломанный орёл справа
+                    eagleSheetRow * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+            );
+
+            // Исправляем перевёрнутость, если нужно
+            eagle.flip(true, true); // Уже не нужно, т.к. орёл отображается правильно
+
+            // Создаём тайл базы
+            MapTile baseTile = new MapTile(eagle, baseMapCol, baseMapRow, true, true);
+            baseTile.setBase(true);
+            baseTile.setDamagedRegion(broken);
+            tiles.add(baseTile);
+
+            Gdx.app.log("MapLoader", "База (орёл) создана на позиции: " + baseMapCol + "," + baseMapRow);
+        }
+
+        // Загружаем остальные тайлы
+        for (String raw : lines) {
+            String line = raw.trim();
+            if (line.isEmpty()) continue;
+
+            String[] parts = line.split(",");
+            int mapRow = Integer.parseInt(parts[0].trim());
+            int mapCol = Integer.parseInt(parts[1].trim());
+            int tileRow = Integer.parseInt(parts[2].trim());
+            int tileCol = Integer.parseInt(parts[3].trim());
+
+            // Пропускаем базу, мы уже её создали
+            if (tileRow == 2 && tileCol == 3) {
                 continue;
             }
 
-            try {
-                int mapRow = Integer.parseInt(parts[0].trim());
-                int mapCol = Integer.parseInt(parts[1].trim());
-                int tileRow = Integer.parseInt(parts[2].trim());
-                int tileCol = Integer.parseInt(parts[3].trim());
+            TextureRegion region = new TextureRegion(
+                    sheet,
+                    tileCol * TILE_SIZE,
+                    tileRow * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE
+            );
 
-                if (tileRow < 0 || tileRow >= rows || tileCol < 0 || tileCol >= cols) {
-                    Gdx.app.error("MapLoader", "Тайл индекс вне диапазона: row=" + tileRow + ", col=" + tileCol);
-                    continue;
-                }
+            boolean isSolid = false;
+            boolean isDestructible = false;
+            TextureRegion damaged = null;
 
-                TextureRegion region = all[tileRow][tileCol];
-
-                boolean isSolid = false;
-                boolean isDestructible = true;
-
-                // === Настрой тайлы вручную ===
-                if (tileRow == 0 && tileCol == 0) { // кирпич
-                    isSolid = true;
-                    isDestructible = true;
-                } else if (tileRow == 1 && tileCol == 0) { // стальная стена (неразрушаемая)
-                    isSolid = true;
-                    isDestructible = false;
-                }
-
-                tiles.add(new MapTile(region, mapCol, mapRow, isSolid, isDestructible));
-
-            } catch (NumberFormatException ex) {
-                Gdx.app.error("MapLoader", "Ошибка разбора числа в строке " + (i + 1) + ": " + line);
+            if (tileRow == 0 && tileCol == 0) {         // кирпич
+                isSolid = true;
+                isDestructible = true;
+                damaged = new TextureRegion(sheet, TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
+            } else if (tileRow == 1 && tileCol == 0) {  // сталь
+                isSolid = true;
+                isDestructible = false;
             }
+
+            MapTile tile = new MapTile(region, mapCol, mapRow, isSolid, isDestructible);
+            if (damaged != null) tile.setDamagedRegion(damaged);
+            tiles.add(tile);
         }
+
+        Gdx.app.log("MapLoader", "Всего тайлов загружено: " + tiles.size);
     }
 }
