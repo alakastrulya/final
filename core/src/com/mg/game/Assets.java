@@ -25,6 +25,9 @@ public class Assets {
     // Game assets
     public static Sprite levelBack;
     public static Sound levelBeginSound;
+    public static Texture enemyIcon;
+    public static Texture healthIcon;
+    public static Texture pixel;
     public static Sound explosionSound;
     public static Sound hitSound;
 
@@ -226,6 +229,10 @@ public class Assets {
             Sprite pauseSprite = new Sprite(pauseTexture);
             pauseSprite.flip(false, true);
             pauseTexture = pauseSprite.getTexture();
+            enemyIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/image.png"));
+            healthIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/iconHealth.png"));
+            pixel = new Texture(Gdx.files.internal("sprites/ui/pixel.png"));
+
 
             Sprite gameOverSprite = new Sprite(gameOverTexture);
             gameOverSprite.flip(false, true);
@@ -234,6 +241,7 @@ public class Assets {
             Gdx.app.error("Assets", "Error loading UI textures: " + e.getMessage());
             pauseTexture = null;
             gameOverTexture = null;
+            healthIcon = null;
         }
     }
 
@@ -355,54 +363,58 @@ public class Assets {
         }
     }
 
-    public static void dispose() {
-        if (textureBack != null) textureBack.dispose();
-        if (yellowTankRight1_Texture != null) yellowTankRight1_Texture.dispose();
-        if (yellowTankRight2_Texture != null) yellowTankRight2_Texture.dispose();
-        if (selectionSound != null) selectionSound.dispose();
-        if (levelBeginSound != null) levelBeginSound.dispose();
-        if (explosionSound != null) explosionSound.dispose();
-        if (hitSound != null) hitSound.dispose();
-        if (tileSet != null) tileSet.dispose();
-        if (pauseTexture != null) pauseTexture.dispose();
-        if (gameOverTexture != null) gameOverTexture.dispose();
-        if (curtainTexture != null) curtainTexture.dispose();
-        if (stageTexture != null) stageTexture.dispose();
+public static void dispose() {
+    if (textureBack != null) textureBack.dispose();
+    if (yellowTankRight1_Texture != null) yellowTankRight1_Texture.dispose();
+    if (yellowTankRight2_Texture != null) yellowTankRight2_Texture.dispose();
+    if (selectionSound != null) selectionSound.dispose();
+    if (levelBeginSound != null) levelBeginSound.dispose();
+    if (explosionSound != null) explosionSound.dispose();
+    if (hitSound != null) hitSound.dispose();
+    if (tileSet != null) tileSet.dispose();
+    if (pauseTexture != null) pauseTexture.dispose();
+    if (gameOverTexture != null) gameOverTexture.dispose();
+    if (enemyIcon != null) enemyIcon.dispose();
+    if (healthIcon != null) healthIcon.dispose();
+    if (pixel != null) pixel.dispose();
+    if (curtainTexture != null) curtainTexture.dispose();
+    if (stageTexture != null) stageTexture.dispose();
 
-        // Dispose explosion textures
-        if (explosionTextures != null) {
-            for (Texture texture : explosionTextures) {
-                if (texture != null) texture.dispose();
-            }
+    // Dispose explosion textures
+    if (explosionTextures != null) {
+        for (Texture texture : explosionTextures) {
+            if (texture != null) texture.dispose();
         }
-
-        if (numberTextures != null) {
-            for (Texture texture : numberTextures) {
-                if (texture != null) texture.dispose();
-            }
-        }
-
-        // Dispose score screen textures
-        if (digitTextures != null) {
-            for (Texture texture : digitTextures) {
-                if (texture != null) texture.dispose();
-            }
-        }
-        if (hiScoreTexture != null) hiScoreTexture.dispose();
-        if (iPlayerTexture != null) iPlayerTexture.dispose();
-        if (iiPlayerTexture != null) iiPlayerTexture.dispose();
-        if (ptsTexture != null) ptsTexture.dispose();
-        if (totalTexture != null) totalTexture.dispose();
-        if (tankIconTexture != null) tankIconTexture.dispose();
-        if (arrowTexture != null) arrowTexture.dispose();
-
-        // Dispose all animations
-        disposeAnimations();
     }
 
-    private static void disposeAnimations() {
-        // This method would dispose all animation textures if needed
-        // Note: Since animations use textures that are already disposed elsewhere,
-        // we don't need to dispose them again here
+    // Dispose number textures
+    if (numberTextures != null) {
+        for (Texture texture : numberTextures) {
+            if (texture != null) texture.dispose();
+        }
     }
+
+    // Dispose score screen textures
+    if (digitTextures != null) {
+        for (Texture texture : digitTextures) {
+            if (texture != null) texture.dispose();
+        }
+    }
+    if (hiScoreTexture != null) hiScoreTexture.dispose();
+    if (iPlayerTexture != null) iPlayerTexture.dispose();
+    if (iiPlayerTexture != null) iiPlayerTexture.dispose();
+    if (ptsTexture != null) ptsTexture.dispose();
+    if (totalTexture != null) totalTexture.dispose();
+    if (tankIconTexture != null) tankIconTexture.dispose();
+    if (arrowTexture != null) arrowTexture.dispose();
+
+    // Dispose all animations
+    disposeAnimations();
+}
+
+private static void disposeAnimations() {
+    // This method would dispose all animation textures if needed
+    // Note: Since animations use textures that are already disposed elsewhere,
+    // we don't need to dispose them again here
+}
 }
