@@ -3,9 +3,11 @@ package com.mg.game.tank;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.GameScreen;
 import com.mg.game.bullet.Bullet;
 import com.mg.game.bullet.BulletFactory;
 import com.mg.game.assets.Assets;
+import com.mg.game.strategy.EnemyStrategy;
 import com.mg.game.tank.state.StandingByState;
 
 import java.util.Random;
@@ -37,6 +39,11 @@ public class Tank {
 
     // Поле для текущего состояния
     private TankState currentState;
+
+    // Для определения стратегии танка
+    private EnemyStrategy strategy;
+
+    public Tank() {}
 
     public Tank(String colour, int level, boolean isEnemy) {
         this.colour = colour;
@@ -124,41 +131,41 @@ public class Tank {
         return bulletFactory.create();
     }
 
-    // Добавьте эти методы в класс Tank для улучшения AI врагов
-    public void improveEnemyAI(float delta, Tank player1, Tank player2) {
-        // Обновляем таймер неуязвимости
-        if (isInvulnerable()) {
-            invulnerabilityTimer -= delta;
-        }
-
-        // Продолжаем только если это вражеский танк
-        if (!isEnemy) {
-            return;
-        }
-
-        // Проверяем, есть ли игрок на линии огня
-        Tank targetPlayer = null;
-
-        if (player1 != null && player1.isAlive()) {
-            if (isInLineOfSight(player1)) {
-                targetPlayer = player1;
-            }
-        }
-
-        if (targetPlayer == null && player2 != null && player2.isAlive()) {
-            if (isInLineOfSight(player2)) {
-                targetPlayer = player2;
-            }
-        }
-
-        // Если игрок на линии огня, увеличиваем шанс выстрела
-        if (targetPlayer != null && Math.random() < 0.1) { // 10% шанс выстрелить, когда игрок на линии огня
-            shoot();
-        }
-    }
+//    // Добавьте эти методы в класс Tank для улучшения AI врагов
+//    public void improveEnemyAI(float delta, Tank player1, Tank player2) {
+//        // Обновляем таймер неуязвимости
+//        if (isInvulnerable()) {
+//            invulnerabilityTimer -= delta;
+//        }
+//
+//        // Продолжаем только если это вражеский танк
+//        if (!isEnemy) {
+//            return;
+//        }
+//
+//        // Проверяем, есть ли игрок на линии огня
+//        Tank targetPlayer = null;
+//
+//        if (player1 != null && player1.isAlive()) {
+//            if (isInLineOfSight(player1)) {
+//                targetPlayer = player1;
+//            }
+//        }
+//
+//        if (targetPlayer == null && player2 != null && player2.isAlive()) {
+//            if (isInLineOfSight(player2)) {
+//                targetPlayer = player2;
+//            }
+//        }
+//
+//        // Если игрок на линии огня, увеличиваем шанс выстрела
+//        if (targetPlayer != null && Math.random() < 0.1) { // 10% шанс выстрелить, когда игрок на линии огня
+//            shoot();
+//        }
+//    }
 
     // Добавьте этот метод для проверки, находится ли игрок на линии огня
-    private boolean isInLineOfSight(Tank player) {
+    public boolean isInLineOfSight(Tank player) {
         // Проверяем, находится ли игрок в том же ряду или колонке
         boolean sameRow = Math.abs(this.positionY - player.positionY) < 10;
         boolean sameColumn = Math.abs(this.positionX - player.positionX) < 10;
@@ -197,8 +204,6 @@ public class Tank {
 
         return correctDirection;
     }
-
-
 
     public void chooseRandomDirection() {
         int dir = random.nextInt(4);
@@ -290,6 +295,23 @@ public class Tank {
             invulnerabilityTimer -= delta;
         }
     }
+
+    public void setStrategy(EnemyStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void performStrategy(float delta, GameScreen context) {
+        if (strategy != null) strategy.update(this, delta, context);
+    }
+
+    public EnemyStrategy getStrategy() {
+        return strategy;
+    }
+
+    public void reduceInvulnerability(float delta) {
+        if (invulnerabilityTimer > 0) invulnerabilityTimer -= delta;
+    }
+
 
     public void setDirection(Direction direction) {
         this.direction = direction;

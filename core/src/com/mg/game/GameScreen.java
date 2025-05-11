@@ -22,6 +22,10 @@ import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.strategy.AggressiveChaseStrategy;
+import com.mg.game.strategy.EnemyStrategy;
+import com.mg.game.strategy.WanderStrategy;
+import com.mg.game.strategy.BaseAttackStrategy;
 import com.mg.game.tank.factory.EnemyTankFactory;
 import com.mg.game.tank.factory.PlayerTankFactory;
 import com.mg.game.tank.Tank;
@@ -207,6 +211,7 @@ public class GameScreen implements Screen, GameObserver {
         EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1);
         for (int i = 0; i < MAX_ENEMIES_ON_MAP; i++) {
             Tank enemy = enemyFactory.create();
+            enemy.setStrategy(getRandomStrategy());
 
             // Используем фиксированные точки появления
             int spawnPointIndex = i % SPAWN_POINTS.length;
@@ -744,6 +749,10 @@ public class GameScreen implements Screen, GameObserver {
             Tank enemy = enemies.get(i);
             if (enemy == null || !enemy.isAlive()) continue;
 
+            if (enemy.getStrategy() != null) {
+                enemy.getStrategy().update(enemy, delta, this);
+            }
+
             // Получаем информацию о движении для этого врага
             if (i >= enemyMovementInfos.size()) {
                 // Если информации нет, создаем новую
@@ -809,9 +818,6 @@ public class GameScreen implements Screen, GameObserver {
                 info.movementDistance++;
                 info.isStuck = false;
             }
-
-            // Используем улучшенный AI для стрельбы
-            enemy.improveEnemyAI(delta, player1, player2);
 
             // Добавляем случайную стрельбу
             if (Math.random() < 0.005) { // 0.5% шанс выстрелить
@@ -992,6 +998,7 @@ public class GameScreen implements Screen, GameObserver {
         // Создаем нового врага
         EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1);
         Tank enemy = enemyFactory.create();
+        enemy.setStrategy(getRandomStrategy());
 
         // Проверяем, свободна ли точка появления
         if (isSpawnPointClear(spawnX, spawnY)) {
@@ -1055,6 +1062,49 @@ public class GameScreen implements Screen, GameObserver {
 
         return collides;
     }
+
+    // Показывает ближайшего игрока для использования стратегии
+    public Tank getNearestAlivePlayer(Tank enemy) {
+        Tank nearest = null;
+        float minDistSq = Float.MAX_VALUE;
+
+        if (player1 != null && player1.isAlive()) {
+            float dx = player1.positionX - enemy.positionX;
+            float dy = player1.positionY - enemy.positionY;
+            float distSq = dx * dx + dy * dy;
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                nearest = player1;
+            }
+        }
+
+        if (player2 != null && player2.isAlive()) {
+            float dx = player2.positionX - enemy.positionX;
+            float dy = player2.positionY - enemy.positionY;
+            float distSq = dx * dx + dy * dy;
+            if (distSq < minDistSq) {
+                minDistSq = distSq;
+                nearest = player2;
+            }
+        }
+
+        return nearest;
+    }
+
+    private EnemyStrategy getRandomStrategy() {
+        int r = (int) (Math.random() * 3); // 0, 1 или 2
+        switch (r) {
+            case 0:
+                return new BaseAttackStrategy();
+            case 1:
+                return new AggressiveChaseStrategy();
+            case 2:
+                return new WanderStrategy(); // если есть
+            default:
+                return new BaseAttackStrategy(); // fallback
+        }
+    }
+
 
     private void updateBullets(float delta) {
         Iterator<Bullet> iterator = bullets.iterator();
@@ -1563,6 +1613,25 @@ public class GameScreen implements Screen, GameObserver {
     public void onBaseDestroyed() {
         gameOver = true;
         Gdx.app.log("GameScreen", "Observer: база уничтожена!");
+    }
+
+    public int getBaseX() {
+        return baseX;
+    }
+
+    // Получить координаты Y базы
+    public int getBaseY() {
+        return baseY;
+    }
+
+    // Получить ссылку на базовый тайл (левый верхний угол базы)
+    public MapTile getBaseTile() {
+        for (MapTile tile : mapLoader.tiles) {
+            if (tile.isBase && tile.x % 2 == 0 && tile.y % 2 == 0) {
+                return tile;
+            }
+        }
+        return null;
     }
 
     @Override
