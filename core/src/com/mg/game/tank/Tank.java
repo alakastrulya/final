@@ -1,10 +1,12 @@
-package com.mg.game;
+package com.mg.game.tank;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.bullet.Bullet;
+import com.mg.game.bullet.BulletFactory;
+import com.mg.game.assets.Assets;
+import com.mg.game.tank.state.StandingByState;
 
 import java.util.Random;
 
@@ -104,20 +106,22 @@ public class Tank {
                 bulletY += 26; // Перед танка по Y
                 break;
             case BACKWARD:
-                bulletX += 13; // Центр танка по X
-                bulletY -= 4; // За танком по Y
+                bulletX += 13;
+                bulletY -= 4;
                 break;
             case LEFT:
-                bulletX -= 4; // Слева от танка по X
-                bulletY += 13; // Центр танка по Y
+                bulletX -= 4;
+                bulletY += 13;
                 break;
             case RIGHT:
-                bulletX += 26; // Справа от танка по X
-                bulletY += 13; // Центр танка по Y
+                bulletX += 26;
+                bulletY += 13;
                 break;
         }
 
-        return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
+        // Используем фабрику для создания пули
+        BulletFactory bulletFactory = new BulletFactory(bulletX, bulletY, direction, colour, isEnemy);
+        return bulletFactory.create();
     }
 
     // Добавьте эти методы в класс Tank для улучшения AI врагов

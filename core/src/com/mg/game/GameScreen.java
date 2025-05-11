@@ -11,15 +11,25 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mg.game.assets.Assets;
+import com.mg.game.bullet.Bullet;
+import com.mg.game.observer.GameObserver;
+import com.mg.game.explosion.Explosion;
+import com.mg.game.explosion.ExplosionFactory;
+import com.mg.game.level.LevelCompleteScreen;
+import com.mg.game.level.LevelIntroAnimation;
 import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.tank.factory.EnemyTankFactory;
+import com.mg.game.tank.factory.PlayerTankFactory;
+import com.mg.game.tank.Tank;
+
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
-public class GameScreen implements Screen {
+public class GameScreen implements Screen, GameObserver {
 
     private int playerCount;
     private gdxGame game;
@@ -38,7 +48,6 @@ public class GameScreen implements Screen {
     private LevelIntroAnimation levelIntro;
     private boolean isLevelIntroPlaying = true;
     private int totalKilledEnemies;
-    private List<EnemyDeathListener> enemyDeathListeners = new ArrayList<>();
 
     // Переменные для контроля скорости движения
     private float moveTimer = 0f;
@@ -136,16 +145,14 @@ public class GameScreen implements Screen {
         enemyMovementInfos = new ArrayList<>();
         totalKilledEnemies = 0;
         font = new BitmapFont(true);
+        gdxGame.addObserver(this);
+
+
 
         gdxGame.resetGameOverFlag();
 
         largeFont = new BitmapFont(false);
         largeFont.getData().setScale(5f);
-
-        addEnemyDeathListener(e -> {
-            totalKilledEnemies++;
-            Gdx.app.log("GameScreen", "Observer: Enemy killed. Total: " + totalKilledEnemies);
-        });
 
 
         // Загружаем ресурсы для игры
@@ -176,14 +183,16 @@ public class GameScreen implements Screen {
         }
 
         // Инициализация первого танка
-        player1 = new Tank("yellow", 1, false);
+        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1);
+        player1 = player1Factory.create();
         player1.positionX = 152;
         player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
 
         // Инициализация второго танка, если выбран режим на 2 игрока
         if (playerCount == 2) {
-            player2 = new Tank("green", 1, false);
+            PlayerTankFactory player2Factory = new PlayerTankFactory("green", 1);
+            player2 = player2Factory.create();
             player2.positionX = 299;
             player2.positionY = 450;
             Gdx.app.log("GameScreen", "Player 2 color: " + player2.getColour());
@@ -195,8 +204,9 @@ public class GameScreen implements Screen {
         this.remainingEnemies = TOTAL_ENEMIES_PER_LEVEL - MAX_ENEMIES_ON_MAP;
 
         // Initialize only MAX_ENEMIES_ON_MAP enemies initially at fixed spawn points
+        EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1);
         for (int i = 0; i < MAX_ENEMIES_ON_MAP; i++) {
-            Tank enemy = new Tank("red", 1, true);
+            Tank enemy = enemyFactory.create();
 
             // Используем фиксированные точки появления
             int spawnPointIndex = i % SPAWN_POINTS.length;
@@ -980,7 +990,8 @@ public class GameScreen implements Screen {
         int spawnY = SPAWN_POINTS[spawnPointIndex][1];
 
         // Создаем нового врага
-        Tank enemy = new Tank("red", 1, true);
+        EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1);
+        Tank enemy = enemyFactory.create();
 
         // Проверяем, свободна ли точка появления
         if (isSpawnPointClear(spawnX, spawnY)) {
@@ -1056,11 +1067,13 @@ public class GameScreen implements Screen {
 
             bullet.update(delta);
 
-            // 💥 Проверка столкновения пуль между собой
+            // Проверка столкновения пуль между собой
             for (Bullet other : bullets) {
                 if (other != bullet && other.isActive() && bullet.isActive()) {
                     if (bullet.getBounds().overlaps(other.getBounds())) {
-                        explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+                        ExplosionFactory explosionFactory1 = new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY());
+                        Explosion explosion = explosionFactory1.create();
+                        explosions.add(explosion);
                         if (explosionSound != null) explosionSound.play();
                         bullet.deactivate();
                         other.deactivate();
@@ -1089,7 +1102,9 @@ public class GameScreen implements Screen {
             }
 
             if (outOfBounds) {
-                explosions.add(new Explosion(explosionX, explosionY));
+                ExplosionFactory explosionFactory2 = new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY());
+                Explosion explosion2 = explosionFactory2.create();
+                explosions.add(explosion2);
                 if (explosionSound != null) explosionSound.play();
                 Gdx.app.log("Bullet", "Пуля вышла за границы карты, создан взрыв на " + explosionX + ", " + explosionY);
                 bullet.deactivate();
@@ -1149,7 +1164,9 @@ public class GameScreen implements Screen {
                 }
 
                 // Взрыв
-                explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+                ExplosionFactory explosionFactory3 = new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY());
+                Explosion explosion3 = explosionFactory3.create();
+                explosions.add(explosion3);
                 if (explosionSound != null) explosionSound.play();
 
                 bullet.deactivate();
@@ -1221,7 +1238,7 @@ public class GameScreen implements Screen {
     }
 
     private void checkKeyPress() {
-// Обработка ввода для первого игрока (желтый танк)
+        // Обработка ввода для первого игрока (желтый танк)
         if (player1 != null && player1.isAlive()) {
             boolean moved = false;
             int movementKeycode = -1;
@@ -1537,14 +1554,15 @@ public class GameScreen implements Screen {
         return collides;
     }
 
-    public void addEnemyDeathListener(EnemyDeathListener listener) {
-        enemyDeathListeners.add(listener);
-    }
 
     private void notifyEnemyKilled(Tank enemy) {
-        for (EnemyDeathListener listener : enemyDeathListeners) {
-            listener.onEnemyKilled(enemy);
-        }
+        onEnemyKilled();
+    }
+
+    @Override
+    public void onBaseDestroyed() {
+        gameOver = true;
+        Gdx.app.log("GameScreen", "Observer: база уничтожена!");
     }
 
     @Override
@@ -1586,5 +1604,6 @@ public class GameScreen implements Screen {
         if (explosionSound != null) explosionSound.dispose();
         if (hitSound != null) hitSound.dispose();
         if (levelIntro != null) levelIntro.dispose();
+        gdxGame.removeObserver(this);
     }
 }

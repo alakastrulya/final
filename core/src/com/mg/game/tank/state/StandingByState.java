@@ -1,7 +1,10 @@
-package com.mg.game;
+package com.mg.game.tank.state;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mg.game.assets.Assets;
+import com.mg.game.tank.Tank;
+import com.mg.game.tank.TankState;
 
 public class StandingByState implements TankState {
     private Tank tank;

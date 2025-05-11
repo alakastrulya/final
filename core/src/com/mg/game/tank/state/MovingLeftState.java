@@ -1,26 +1,29 @@
-package com.mg.game;
+package com.mg.game.tank.state;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mg.game.assets.Assets;
+import com.mg.game.tank.Tank;
+import com.mg.game.tank.TankState;
 
-public class MovingRightState implements TankState {
+public class MovingLeftState implements TankState {
     private Tank tank;
 
-    public MovingRightState(Tank tank) {
+    public MovingLeftState(Tank tank) {
         this.tank = tank;
     }
 
     @Override
     public void handleInput(int keycode, float stateTime) {
-        if (keycode == Input.Keys.RIGHT) {
-            tank.setDirection(Tank.Direction.RIGHT);
-            tank.moveRight();
+        if (keycode == Input.Keys.LEFT) {
+            tank.setDirection(Tank.Direction.LEFT);
+            tank.moveLeft();
         } else if (keycode == Input.Keys.UP) {
             tank.setState(new MovingBackwardState(tank));
         } else if (keycode == Input.Keys.DOWN) {
             tank.setState(new MovingForwardState(tank));
-        } else if (keycode == Input.Keys.LEFT) {
-            tank.setState(new MovingLeftState(tank));
+        } else if (keycode == Input.Keys.RIGHT) {
+            tank.setState(new MovingRightState(tank));
         } else if (keycode == Input.Keys.SPACE) {
             tank.shoot();
         } else {
@@ -29,6 +32,6 @@ public class MovingRightState implements TankState {
     }
 
     public TextureRegion getCurrentFrame(float stateTime) {
-        return Assets.getMovingRightAnimation(tank.getColour()).getKeyFrame(stateTime, true);
+        return Assets.getMovingLeftAnimation(tank.getColour()).getKeyFrame(stateTime, true);
     }
 }
