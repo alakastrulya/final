@@ -17,6 +17,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class GameScreen implements Screen {
 
@@ -37,6 +38,7 @@ public class GameScreen implements Screen {
     private LevelIntroAnimation levelIntro;
     private boolean isLevelIntroPlaying = true;
     private int totalKilledEnemies;
+    private List<EnemyDeathListener> enemyDeathListeners = new ArrayList<>();
 
     // Переменные для контроля скорости движения
     private float moveTimer = 0f;
@@ -137,6 +139,12 @@ public class GameScreen implements Screen {
 
         largeFont = new BitmapFont(false);
         largeFont.getData().setScale(5f);
+
+        addEnemyDeathListener(e -> {
+            totalKilledEnemies++;
+            Gdx.app.log("GameScreen", "Observer: Enemy killed. Total: " + totalKilledEnemies);
+        });
+
 
         // Загружаем ресурсы для игры
         Assets.loadLevel(currentLevel);
@@ -1180,7 +1188,7 @@ public class GameScreen implements Screen {
                     if (enemy.takeDamage()) {
                         if (explosionSound != null) explosionSound.play();
                         score += 100;
-                        onEnemyKilled(); // Вызываем метод при уничтожении врага
+                        notifyEnemyKilled(enemy); // Вызываем метод при уничтожении врага
                     } else {
                         if (hitSound != null) hitSound.play();
                     }
@@ -1518,6 +1526,16 @@ public class GameScreen implements Screen {
         tank.positionY = (int) oldY;
 
         return collides;
+    }
+
+    public void addEnemyDeathListener(EnemyDeathListener listener) {
+        enemyDeathListeners.add(listener);
+    }
+
+    private void notifyEnemyKilled(Tank enemy) {
+        for (EnemyDeathListener listener : enemyDeathListeners) {
+            listener.onEnemyKilled(enemy);
+        }
     }
 
     @Override
