@@ -1040,6 +1040,19 @@ public class GameScreen implements Screen {
 
             bullet.update(delta);
 
+            // 💥 Проверка столкновения пуль между собой
+            for (Bullet other : bullets) {
+                if (other != bullet && other.isActive() && bullet.isActive()) {
+                    if (bullet.getBounds().overlaps(other.getBounds())) {
+                        explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+                        if (explosionSound != null) explosionSound.play();
+                        bullet.deactivate();
+                        other.deactivate();
+                        break;
+                    }
+                }
+            }
+
             // Проверка выхода за границы
             boolean outOfBounds = false;
             float explosionX = bullet.getPositionX();
@@ -1061,16 +1074,15 @@ public class GameScreen implements Screen {
 
             if (outOfBounds) {
                 explosions.add(new Explosion(explosionX, explosionY));
-                if (explosionSound != null) {
-                    explosionSound.play();
-                }
+                if (explosionSound != null) explosionSound.play();
+                Gdx.app.log("Bullet", "Пуля вышла за границы карты, создан взрыв на " + explosionX + ", " + explosionY);
                 bullet.deactivate();
                 bullet.dispose();
                 iterator.remove();
                 continue;
             }
 
-            // Проверка коллизий
+            // Проверяем столкновения с объектами на карте и танками
             checkBulletCollisions(bullet);
 
             if (!bullet.isActive()) {
@@ -1078,8 +1090,8 @@ public class GameScreen implements Screen {
                 iterator.remove();
             }
         }
-        cleanupDeadEnemies(); // Добавляем очистку после обработки всех пуль
     }
+
 
     private void checkBulletCollisions(Bullet bullet) {
         if (bullet == null || !bullet.isActive()) return;
@@ -1359,7 +1371,7 @@ public class GameScreen implements Screen {
         Gdx.app.log("GameScreen", "Enemy killed! Total killed: " + totalKilledEnemies);
     }
 
-        boolean checkCollisionWithTank (Tank tank,int newX, int newY){
+    boolean checkCollisionWithTank (Tank tank,int newX, int newY){
         if (tank == null) return false;
 
         int oldX = tank.positionX;
@@ -1385,7 +1397,7 @@ public class GameScreen implements Screen {
         return collides;
     }
 
-        private boolean checkCollisionWithEnemy (Tank tank,int newX, int newY){
+    private boolean checkCollisionWithEnemy (Tank tank,int newX, int newY){
         if (tank == null) return false;
 
         int oldX = tank.positionX;
@@ -1408,7 +1420,7 @@ public class GameScreen implements Screen {
         return collides;
     }
 
-        private boolean checkCollisionWithMap ( int newX, int newY, Tank tank){
+    private boolean checkCollisionWithMap ( int newX, int newY, Tank tank){
         Rectangle tankRect = new Rectangle(newX, newY, 26 / TILE_SCALE, 26 / TILE_SCALE);
         for (MapTile tile : mapLoader.tiles) {
             if (tile.isSolid) {
@@ -1421,7 +1433,7 @@ public class GameScreen implements Screen {
         return false;
     }
 
-        private int[] findFreeSpawnPoint ( int startX, int startY, int step){
+    private int[] findFreeSpawnPoint ( int startX, int startY, int step){
         for (int y = startY; y < 480; y += step) {
             for (int x = startX; x < 440; x += step) {
                 Rectangle rect = new Rectangle(x, y, 26 / TILE_SCALE, 26 / TILE_SCALE);
@@ -1475,7 +1487,7 @@ public class GameScreen implements Screen {
         return new int[]{50, 50}; // fallback
     }
 
-        private boolean checkCollisionWithEnemy (Tank tank,float newX, float newY){
+    private boolean checkCollisionWithEnemy (Tank tank,float newX, float newY){
         if (tank == null) return false;
 
         float oldX = tank.positionX;
@@ -1498,33 +1510,33 @@ public class GameScreen implements Screen {
         return collides;
     }
 
-        @Override
-        public void show () {
+    @Override
+    public void show () {
         // Метод вызывается при показе экрана
     }
 
-        @Override
-        public void resize ( int width, int height){
+    @Override
+    public void resize ( int width, int height){
         // Метод вызывается при изменении размера окна
     }
 
-        @Override
-        public void pause () {
+    @Override
+    public void pause () {
         isPaused = true;
     }
 
-        @Override
-        public void resume () {
+    @Override
+    public void resume () {
         // Можно оставить игру на паузе при восстановлении окна
     }
 
-        @Override
-        public void hide () {
+    @Override
+    public void hide () {
         // Метод вызывается при скрытии экрана
     }
 
-        @Override
-        public void dispose () {
+    @Override
+    public void dispose () {
         batch.dispose();
         textBatch.dispose();
         for (Bullet bullet : bullets) {
