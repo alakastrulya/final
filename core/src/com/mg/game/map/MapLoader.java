@@ -44,50 +44,64 @@ public class MapLoader {
             int mapCol = Integer.parseInt(parts[1].trim());
             int tileRow = Integer.parseInt(parts[2].trim());
             int tileCol = Integer.parseInt(parts[3].trim());
+            // Пропускаем все 4 тайла базы, чтобы не перезаписать их
+            if ((mapRow == baseMapRow && mapCol == baseMapCol) ||
+                    (mapRow == baseMapRow && mapCol == baseMapCol + 1) ||
+                    (mapRow == baseMapRow + 1 && mapCol == baseMapCol) ||
+                    (mapRow == baseMapRow + 1 && mapCol == baseMapCol + 1)) {
+                continue;
+            }
+
 
             // Находим базу (орёл) в файле карты
             if (tileRow == 2 && tileCol == 3) {
                 baseMapRow = mapRow;
-                baseMapCol = mapCol;
-                break;
+                baseMapCol = mapCol - 1;
+                continue;
             }
         }
 
         // Если нашли базу, создаем для неё тайл 2×2
-        if (baseMapRow != -1 && baseMapCol != -1) {
-            // Координаты орла в тайлсете (используем те, что уже работают)
-            // Судя по скриншоту, орёл уже отображается правильно
-            int eagleSheetRow = 2; // Строка орла в тайлсете
-            int eagleSheetCol = 3; // Столбец орла в тайлсете
+        if (baseMapRow != -1 && baseMapCol != -1) if (baseMapRow != -1 && baseMapCol != -1) {
+            int eagleSheetRow = 2;
+            int eagleSheetCol = 3;
 
-            // Создаём текстуру орла
-            TextureRegion eagle = new TextureRegion(
+            // Оригинальный орёл 32×32 (разбиваем на 4 части 16×16)
+            TextureRegion fullEagle = new TextureRegion(
                     sheet,
                     eagleSheetCol * TILE_SIZE,
                     eagleSheetRow * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
+                    TILE_SIZE * 2,
+                    TILE_SIZE * 2
             );
+            fullEagle.flip(true, true);
 
-            // Создаём текстуру сломанного орла
-            TextureRegion broken = new TextureRegion(
+            TextureRegion fullBroken = new TextureRegion(
                     sheet,
-                    (eagleSheetCol + 1) * TILE_SIZE, // Предполагаем, что сломанный орёл справа
+                    (eagleSheetCol + 2) * TILE_SIZE,
                     eagleSheetRow * TILE_SIZE,
-                    TILE_SIZE,
-                    TILE_SIZE
+                    TILE_SIZE * 2,
+                    TILE_SIZE * 2
             );
+            fullBroken.flip(true, true);
 
-            // Исправляем перевёрнутость, если нужно
-            eagle.flip(true, true); // Уже не нужно, т.к. орёл отображается правильно
+            // Разбиваем на 4 части (левый верхний, правый верхний, нижние два)
+            TextureRegion[][] eagleParts = fullEagle.split(TILE_SIZE, TILE_SIZE);
+            TextureRegion[][] brokenParts = fullBroken.split(TILE_SIZE, TILE_SIZE);
 
-            // Создаём тайл базы
-            MapTile baseTile = new MapTile(eagle, baseMapCol, baseMapRow, true, true);
-            baseTile.setBase(true);
-            baseTile.setDamagedRegion(broken);
-            tiles.add(baseTile);
+            for (int dy = 0; dy < 2; dy++) {
+                for (int dx = 0; dx < 2; dx++) {
+                    int row = baseMapRow + dy;
+                    int col = baseMapCol + dx;
 
-            Gdx.app.log("MapLoader", "База (орёл) создана на позиции: " + baseMapCol + "," + baseMapRow);
+                    MapTile tile = new MapTile(eagleParts[dy][dx], col, row, true, true);
+                    tile.setBase(true);
+                    tile.setDamagedRegion(brokenParts[dy][dx]);
+                    tiles.add(tile);
+                }
+            }
+
+            Gdx.app.log("MapLoader", "База (орёл) 2x2 создана на позициях: (" + baseMapCol + "," + baseMapRow + ") до (" + (baseMapCol + 1) + "," + (baseMapRow + 1) + ")");
         }
 
         // Загружаем остальные тайлы
@@ -133,5 +147,12 @@ public class MapLoader {
         }
 
         Gdx.app.log("MapLoader", "Всего тайлов загружено: " + tiles.size);
+        for (MapTile tile : tiles) {
+            if (tile.isBase) {
+                Gdx.app.log("BASE_CHECK", "Base tile at map (" + tile.x + "," + tile.y + "), damagedRegion=" +
+                        (tile.damagedRegion != null ? "YES" : "NO"));
+            }
+        }
+
     }
 }
