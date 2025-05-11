@@ -63,10 +63,11 @@ public class MapLoader {
 
         // Если нашли базу, создаем для неё тайл 2×2
         if (baseMapRow != -1 && baseMapCol != -1) if (baseMapRow != -1 && baseMapCol != -1) {
-            int eagleSheetRow = 2;
-            int eagleSheetCol = 3;
+            int eagleSheetRow = 0;
+            int eagleSheetCol = 0;
 
             // Оригинальный орёл 32×32 (разбиваем на 4 части 16×16)
+
             TextureRegion fullEagle = new TextureRegion(
                     sheet,
                     eagleSheetCol * TILE_SIZE,
@@ -78,7 +79,7 @@ public class MapLoader {
 
             TextureRegion fullBroken = new TextureRegion(
                     sheet,
-                    (eagleSheetCol + 2) * TILE_SIZE,
+                    (eagleSheetCol + 1) * TILE_SIZE,
                     eagleSheetRow * TILE_SIZE,
                     TILE_SIZE * 2,
                     TILE_SIZE * 2
