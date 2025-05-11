@@ -20,10 +20,11 @@ public class StandingByState implements TankState {
             tank.setState(new MovingLeftState(tank));
         } else if (keycode == Input.Keys.RIGHT) {
             tank.setState(new MovingRightState(tank));
-        } else if (keycode == Input.Keys.SPACE) {
+        } else if (keycode == Input.Keys.SPACE || keycode == Input.Keys.ENTER) {
             tank.shoot();
         }
     }
+
 
     @Override
     public TextureRegion getCurrentFrame(float stateTime) {
