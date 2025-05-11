@@ -1150,6 +1150,11 @@ public class GameScreen implements Screen {
                 } else {
                     if (hitSound != null) hitSound.play();
                 }
+
+                if (player1.isAlive()) {
+                    player1.positionX = 152;
+                    player1.positionY = 450;
+                }
             }
 
             if (player2 != null && player2.isAlive() && bulletBounds.overlaps(player2.getBounds())) {
@@ -1159,6 +1164,11 @@ public class GameScreen implements Screen {
                     if (explosionSound != null) explosionSound.play();
                 } else {
                     if (hitSound != null) hitSound.play();
+                }
+
+                if (player2.isAlive()) {
+                    player2.positionX = 299;
+                    player2.positionY = 450;
                 }
             }
         } else {
