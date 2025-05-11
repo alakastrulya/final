@@ -1002,40 +1002,41 @@ public class GameScreen implements Screen {
 
             bullet.update(delta);
 
-            // Проверяем, не вышла ли пуля за границы игровой карты (480x480)
+            for (Bullet other : bullets) {
+                if (other != bullet && other.isActive() && bullet.isActive()) {
+                    if (bullet.getBounds().overlaps(other.getBounds())) {
+                        explosions.add(new Explosion(bullet.getPositionX(), bullet.getPositionY()));
+                        if (explosionSound != null) explosionSound.play();
+
+                        bullet.deactivate();
+                        other.deactivate();
+                        break;
+                    }
+                }
+            }
+
+            // Проверяем, не вышла ли пуля за границы
             boolean outOfBounds = false;
             float explosionX = bullet.getPositionX();
             float explosionY = bullet.getPositionY();
 
-            // Проверка правой границы (480 пикселей)
             if (bullet.getPositionX() >= 480) {
                 outOfBounds = true;
-                explosionX = 465; // 480 - 15 (чтобы взрыв был полностью виден)
-            }
-            // Проверка левой границы
-            else if (bullet.getPositionX() < 0) {
+                explosionX = 465;
+            } else if (bullet.getPositionX() < 0) {
                 outOfBounds = true;
-                explosionX = 15; // Смещаем вправо, чтобы взрыв был виден
-            }
-            // Проверка нижней границы
-            else if (bullet.getPositionY() >= 480) {
+                explosionX = 15;
+            } else if (bullet.getPositionY() >= 480) {
                 outOfBounds = true;
-                explosionY = 465; // 480 - 15 (чтобы взрыв был полностью виден)
-            }
-            // Проверка верхней границы
-            else if (bullet.getPositionY() < 0) {
+                explosionY = 465;
+            } else if (bullet.getPositionY() < 0) {
                 outOfBounds = true;
-                explosionY = 15; // Смещаем вниз, чтобы взрыв был виден
+                explosionY = 15;
             }
 
-            // Если пуля вышла за границы, создаем взрыв и удаляем пулю
             if (outOfBounds) {
-                // Создаем взрыв на границе карты, без дополнительного смещения на -14
-                // так как мы уже учли это в координатах explosionX и explosionY
                 explosions.add(new Explosion(explosionX, explosionY));
-                if (explosionSound != null) {
-                    explosionSound.play();
-                }
+                if (explosionSound != null) explosionSound.play();
                 Gdx.app.log("Bullet", "Пуля вышла за границы карты, создан взрыв на " + explosionX + ", " + explosionY);
                 bullet.deactivate();
                 bullet.dispose();
@@ -1043,7 +1044,7 @@ public class GameScreen implements Screen {
                 continue;
             }
 
-            // Проверяем столкновения с объектами на карте
+            // Проверяем столкновения с картой, танками и т.д.
             checkBulletCollisions(bullet);
 
             if (!bullet.isActive()) {
