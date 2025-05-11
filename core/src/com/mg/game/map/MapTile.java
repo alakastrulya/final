@@ -2,6 +2,7 @@ package com.mg.game.map;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.Gdx;
 
 public class MapTile {
     public TextureRegion region;
@@ -46,17 +47,16 @@ public class MapTile {
     public void takeHit() {
         if (!isDestructible) return;
 
-        // Помечаем тайл как неавтразрушаемый и проходной
         isSolid = false;
         isDestructible = false;
 
-        // Если это база (орёл), меняем текстуру на сломанную
-        if (isBase && damagedRegion != null) {
+        if (damagedRegion != null) {
             this.region = new TextureRegion(damagedRegion);
         }
-        // Для обычных блоков можно также менять текстуру
-        else if (damagedRegion != null) {
-            this.region = new TextureRegion(damagedRegion);
+
+        if (isBase) {
+            Gdx.app.log("GameScreen", "Орёл подбит!");
+            com.mg.game.gdxGame.setGameOverFlag(); // мы вызовем этот метод (ниже добавим)
         }
     }
 }

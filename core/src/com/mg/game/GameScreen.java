@@ -137,6 +137,8 @@ public class GameScreen implements Screen {
         totalKilledEnemies = 0;
         font = new BitmapFont(true);
 
+        gdxGame.resetGameOverFlag();
+
         largeFont = new BitmapFont(false);
         largeFont.getData().setScale(5f);
 
@@ -244,6 +246,11 @@ public class GameScreen implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
+
+        if (gdxGame.isGameOver()) {
+            gameOver = true;
+        }
+
 
         // Проверяем нажатие клавиши паузы (P или ESC)
         if (Gdx.input.isKeyJustPressed(Input.Keys.P) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
@@ -408,16 +415,17 @@ public class GameScreen implements Screen {
         float baseOffsetX = -BASE_TILE_SHIFT;
         float baseOffsetY = -BASE_TILE_SHIFT;
 
+        boolean baseDrawn = false;
         for (MapTile tile : mapLoader.tiles) {
             if (tile.isBase) {
-                // Рисуем базу (орла) размером 2×2 тайла
-                float x = tile.x * scaled + offsetX + baseOffsetX;
-                float y = tile.y * scaled + offsetY + baseOffsetY;
-
-                // Важно! Рисуем базу размером 2×2 тайла
-                batch.draw(tile.region, x, y, scaled * 2, scaled * 2);
+                // Рисуем ТОЛЬКО левый верхний тайл базы — он отвечает за текстуру всей базы
+                if (!baseDrawn && tile.x % 2 == 0 && tile.y % 2 == 0) {
+                    float x = tile.x * scaled + offsetX + baseOffsetX;
+                    float y = tile.y * scaled + offsetY + baseOffsetY;
+                    batch.draw(tile.region, x, y, scaled * 2, scaled * 2);
+                    baseDrawn = true;
+                }
             } else if (tile.isSolid) {
-                // Обычные тайлы
                 float x = tile.x * scaled + offsetX;
                 float y = tile.y * scaled + offsetY;
                 batch.draw(tile.region, x, y, scaled, scaled);
@@ -1117,11 +1125,12 @@ public class GameScreen implements Screen {
                     tile.takeHit();
 
                     // Проверка на уничтожение базы
-                    if (tile.isBase && !tile.isSolid) {
+                    if (tile.isBase) {
                         gameOver = true;
                         Gdx.app.log("GameScreen", "База уничтожена! Игра окончена.");
                     }
 
+                    // Повреждаем соседний блок
                     // Повреждаем соседний блок
                     int tx = tile.x;
                     int ty = tile.y;
@@ -1132,8 +1141,8 @@ public class GameScreen implements Screen {
                                 (neighbor.x == tx && Math.abs(neighbor.y - ty) == 1) ||
                                         (neighbor.y == ty && Math.abs(neighbor.x - tx) == 1);
 
-                        if (isNeighbor) {
-                            neighbor.takeHit();
+                        if (isNeighbor && !neighbor.isBase) {
+                            neighbor.takeHit(); // ← база больше не ломается случайно
                             break;
                         }
                     }
