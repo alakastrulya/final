@@ -59,16 +59,15 @@ public class LevelIntroAnimation {
         this.isYFlipped = true; // Предполагаем, что система координат перевернута
 
         // Настройка размера шторок
-        this.curtainHeight = Gdx.graphics.getHeight() * 0.45f;
-
-        // Настройка расстояния между шторками в центре (для текста)
-        this.centerGap = Gdx.graphics.getHeight() * 0.1f; // 10% высоты экрана
+        this.curtainHeight = Gdx.graphics.getHeight() / 2f + (centerGap / 2f);
 
         // Вычисляем конечные позиции шторок с учетом перевернутой системы координат
         if (isYFlipped) {
-            // В перевернутой системе Y=0 вверху экрана, Y=height внизу
-            this.topCurtainFinalY = (Gdx.graphics.getHeight() - centerGap) / 2 - curtainHeight;
-            this.bottomCurtainFinalY = (Gdx.graphics.getHeight() + centerGap) / 2;
+            float centerY = Gdx.graphics.getHeight() / 2f;
+            this.topCurtainFinalY = centerY - curtainHeight;
+            this.bottomCurtainFinalY = centerY;
+
+
 
             // Начальные позиции шторок (за пределами экрана)
             this.curtainTopY = -curtainHeight; // Верхняя шторка полностью за верхней границей экрана
@@ -95,7 +94,7 @@ public class LevelIntroAnimation {
         this.isFinished = false;
 
         // Создаем шрифт для текста "STAGE X" (запасной вариант)
-        font = new BitmapFont(false);
+        font = new BitmapFont(Gdx.files.internal("fonts/pixel.fnt"));
         font.getData().setScale(5.0f); // Большой размер шрифта
         font.setColor(Color.WHITE);
 
@@ -236,53 +235,28 @@ public class LevelIntroAnimation {
     }
 
     public void render(SpriteBatch batch) {
-        // Сохраняем текущий цвет пакетного рендерера
-        Color oldColor = batch.getColor().cpy();
-
-        // Рисуем верхнюю шторку с цветом #636363
-        batch.setColor(curtainColor);
+        // Верхняя штора
         batch.draw(curtainTexture, 0, curtainTopY, Gdx.graphics.getWidth(), curtainHeight);
 
-        // Рисуем нижнюю шторку с цветом #636363
-        batch.draw(curtainTexture, 0, curtainBottomY - curtainHeight, Gdx.graphics.getWidth(), curtainHeight);
+        // Нижняя штора
+        batch.draw(curtainTexture, 0, curtainBottomY, Gdx.graphics.getWidth(), curtainHeight);
 
-        // Если в состоянии показа текста, рисуем "STAGE X"
-        if (currentState == State.SHOW_STAGE_TEXT) {
-            batch.setColor(1, 1, 1, textAlpha); // Устанавливаем прозрачность
+        // Текст "STAGE X"
+        if (currentState == State.SHOW_STAGE_TEXT && textAlpha > 0f) {
+            font.setColor(1, 1, 1, textAlpha);
+            String text = "STAGE " + levelNumber;
+            GlyphLayout layout = new GlyphLayout(font, text);
+            float textX = (Gdx.graphics.getWidth() - layout.width) / 2f;
 
-            // Проверяем, загружены ли текстуры
-            if (stageTexture != null && numberTexture != null) {
-                // Вычисляем размеры с учетом масштаба
-                float stageWidth = stageTexture.getWidth() * textScale;
-                float stageHeight = stageTexture.getHeight() * textScale;
-                float numberWidth = numberTexture.getWidth() * textScale;
-                float numberHeight = numberTexture.getHeight() * textScale;
+            // Центр между шторками
+            float textY = Gdx.graphics.getHeight() / 2f + layout.height / 2f;
 
-                // Вычисляем позиции для центрирования
-                float totalWidth = stageWidth + 20 + numberWidth;
-                float stageX = Gdx.graphics.getWidth() / 2 - totalWidth / 2;
-                float numberX = stageX + stageWidth + 20;
-                float stageY = Gdx.graphics.getHeight() / 2 - stageHeight / 2;
-                float numberY = Gdx.graphics.getHeight() / 2 - numberHeight / 2;
-
-                // Рисуем текстуры с увеличенным размером
-                batch.draw(stageTexture, stageX, stageY, stageWidth, stageHeight);
-                batch.draw(numberTexture, numberX, numberY, numberWidth, numberHeight);
-            } else {
-                // Запасной вариант - рендерим текст, если текстуры не загрузились
-                String stageText = "STAGE " + levelNumber;
-                GlyphLayout layout = new GlyphLayout(font, stageText);
-
-                font.setColor(1, 1, 1, textAlpha);
-                font.draw(batch, stageText,
-                        Gdx.graphics.getWidth() / 2 - layout.width / 2,
-                        Gdx.graphics.getHeight() / 2 + layout.height / 2);
-            }
+            font.draw(batch, layout, textX, textY);
         }
-
-        // Восстанавливаем цвет пакетного рендерера
-        batch.setColor(oldColor);
     }
+
+
+
 
     public boolean isFinished() {
         return isFinished;
