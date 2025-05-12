@@ -17,6 +17,8 @@ public class Assets {
     public static Sprite spriteBack;
     public static Texture yellowTankRight1_Texture;
     public static Texture yellowTankRight2_Texture;
+    public static Texture greenTankRight1_Texture;
+
     public static Animation<TextureRegion> movingTankAnimation;
     public static TextureRegion[] sheet_frames;
     public static TextureRegion current_frame;
@@ -118,11 +120,12 @@ public class Assets {
             yellowTankRight2_Texture = new Texture(Gdx.files.internal("sprites/tanks/yellow/level_1/right2.png"));
             sheet_frames = new TextureRegion[2];
 
-            sheet_frames[1] = new TextureRegion(yellowTankRight1_Texture, 0, 0, 13, 13);
-            sheet_frames[0] = new TextureRegion(yellowTankRight2_Texture, 0, 0, 13, 13);
+            sheet_frames[0] = new TextureRegion(yellowTankRight1_Texture, 0, 0, 13, 13);
+            sheet_frames[1] = new TextureRegion(yellowTankRight2_Texture, 0, 0, 13, 13);
 
-            movingTankAnimation = new Animation<>(0.1F, sheet_frames);
+            movingTankAnimation = new Animation<>(0.1f, sheet_frames);
             selectionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/menuSelect.mp3"));
+            greenTankRight1_Texture = new Texture(Gdx.files.internal("sprites/tanks/green/level_1/right1.png"));
 
             // Load UI textures
             loadUITextures();
@@ -172,32 +175,32 @@ public class Assets {
             TextureRegion standByForwardFrame = new TextureRegion(forward1, 0, 0, 13, 13);
             movingForwardSheetFrames[0] = new TextureRegion(forward1, 0, 0, 13, 13);
             movingForwardSheetFrames[1] = new TextureRegion(forward2, 0, 0, 13, 13);
-            movingForwardAnimations.put(colour, new Animation<>(0.05F, movingForwardSheetFrames));
-            standByForwardAnimations.put(colour, new Animation<>(0.05F, standByForwardFrame));
+            movingForwardAnimations.put(colour, new Animation<>(0.05f, movingForwardSheetFrames));
+            standByForwardAnimations.put(colour, new Animation<>(0.05F, new TextureRegion[] { standByForwardFrame }));
 
             // Create backward animations
             TextureRegion[] movingBackwardSheetFrames = new TextureRegion[2];
             TextureRegion standByBackwardFrame = new TextureRegion(backward1, 0, 0, 13, 13);
             movingBackwardSheetFrames[0] = new TextureRegion(backward1, 0, 0, 13, 13);
             movingBackwardSheetFrames[1] = new TextureRegion(backward2, 0, 0, 13, 13);
-            movingBackwardAnimations.put(colour, new Animation<>(0.05F, movingBackwardSheetFrames));
-            standByBackwardAnimations.put(colour, new Animation<>(0.05F, standByBackwardFrame));
+            movingBackwardAnimations.put(colour, new Animation<>(0.05f, movingBackwardSheetFrames));
+            standByBackwardAnimations.put(colour, new Animation<>(0.05f,  new TextureRegion[] { standByBackwardFrame}));
 
             // Create left animations
             TextureRegion[] movingLeftSheetFrames = new TextureRegion[2];
             TextureRegion standByLeftFrame = new TextureRegion(left1, 0, 0, 13, 13);
             movingLeftSheetFrames[0] = new TextureRegion(left1, 0, 0, 13, 13);
             movingLeftSheetFrames[1] = new TextureRegion(left2, 0, 0, 13, 13);
-            movingLeftAnimations.put(colour, new Animation<>(0.05F, movingLeftSheetFrames));
-            standByLeftAnimations.put(colour, new Animation<>(0.05F, standByLeftFrame));
+            movingLeftAnimations.put(colour, new Animation<>(0.05f, movingLeftSheetFrames));
+            standByLeftAnimations.put(colour, new Animation<>(0.05f,  new TextureRegion[] { standByLeftFrame}));
 
             // Create right animations
             TextureRegion[] movingRightSheetFrames = new TextureRegion[2];
             TextureRegion standByRightFrame = new TextureRegion(right1, 0, 0, 13, 13);
             movingRightSheetFrames[0] = new TextureRegion(right1, 0, 0, 13, 13);
             movingRightSheetFrames[1] = new TextureRegion(right2, 0, 0, 13, 13);
-            movingRightAnimations.put(colour, new Animation<>(0.05F, movingRightSheetFrames));
-            standByRightAnimations.put(colour, new Animation<>(0.05F, standByRightFrame));
+            movingRightAnimations.put(colour, new Animation<>(0.05f, movingRightSheetFrames));
+            standByRightAnimations.put(colour, new Animation<>(0.05f,  new TextureRegion[] { standByRightFrame}));
 
             Gdx.app.log("Assets", "Successfully loaded animations for " + colour + " tank");
         } catch (Exception e) {
@@ -220,19 +223,16 @@ public class Assets {
 
     public static void loadUITextures() {
         try {
-            // Load textures for pause and game over as separate files
             pauseTexture = new Texture(Gdx.files.internal("sprites/ui/pause.png"));
             gameOverTexture = new Texture(Gdx.files.internal("sprites/ui/gameover.png"));
-
-            // Create sprites from textures and flip them vertically,
-            // since the camera is flipped (setToOrtho(true) in GameScreen)
-            Sprite pauseSprite = new Sprite(pauseTexture);
-            pauseSprite.flip(false, true);
-            pauseTexture = pauseSprite.getTexture();
             enemyIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/image.png"));
             healthIcon = new Texture(Gdx.files.internal("sprites/tanks/icon/iconHealth.png"));
             pixel = new Texture(Gdx.files.internal("sprites/ui/pixel.png"));
 
+            // Create sprites from textures and flip them vertically
+            Sprite pauseSprite = new Sprite(pauseTexture);
+            pauseSprite.flip(false, true);
+            pauseTexture = pauseSprite.getTexture();
 
             Sprite gameOverSprite = new Sprite(gameOverTexture);
             gameOverSprite.flip(false, true);
@@ -241,13 +241,14 @@ public class Assets {
             Gdx.app.error("Assets", "Error loading UI textures: " + e.getMessage());
             pauseTexture = null;
             gameOverTexture = null;
+            enemyIcon = null;
             healthIcon = null;
+            pixel = null;
         }
     }
 
     public static void loadCurtainTextures() {
         try {
-            // Create a simple gray texture for curtains
             Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
             pixmap.setColor(Color.GRAY);
             pixmap.fill();
@@ -255,9 +256,7 @@ public class Assets {
             pixmap.dispose();
         } catch (Exception e) {
             Gdx.app.error("Assets", "Error loading curtain textures: " + e.getMessage());
-            // Don't set curtainTexture to null to avoid NullPointerException
             try {
-                // Try creating the texture again
                 Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
                 pixmap.setColor(Color.GRAY);
                 pixmap.fill();
@@ -272,17 +271,14 @@ public class Assets {
 
     public static void loadStageTextures() {
         try {
-            // Load texture for "STAGE" text
             stageTexture = new Texture(Gdx.files.internal("sprites/ui/stage.png"));
 
-            // Load textures for numbers (assuming we have 8 levels)
             numberTextures = new Texture[9]; // 0-8
             for (int i = 1; i <= 8; i++) {
                 try {
                     numberTextures[i] = new Texture(Gdx.files.internal("sprites/ui/number" + i + ".png"));
                 } catch (Exception e) {
                     Gdx.app.error("Assets", "Error loading number texture " + i + ": " + e.getMessage());
-                    // If failed to load texture for a specific number, create an empty one
                     Pixmap pixmap = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
                     pixmap.setColor(Color.CLEAR);
                     pixmap.fill();
@@ -299,42 +295,62 @@ public class Assets {
 
     public static void loadScoreScreenTextures() {
         try {
-            // Load digit textures (0–9) and flip vertically
+            // Load digit textures (0-9)
             digitTextures = new Texture[10];
             for (int i = 0; i < 10; i++) {
-                TextureRegion region = new TextureRegion(new Texture(Gdx.files.internal("sprites/ui/digit" + i + ".png")));
-                region.flip(false, true);
-                Pixmap pixmap = region.getTexture().getTextureData().consumePixmap();
-                digitTextures[i] = new Texture(pixmap);
-                pixmap.dispose();
+                String path = "sprites/ui/digit" + i + ".png";
+                try {
+                    digitTextures[i] = new Texture(Gdx.files.internal(path));
+                    TextureRegion region = new TextureRegion(digitTextures[i]);
+                    region.flip(false, true);
+                    Pixmap pixmap = digitTextures[i].getTextureData().consumePixmap();
+                    digitTextures[i] = new Texture(pixmap);
+                    pixmap.dispose();
+                    Gdx.app.log("Assets", "Loaded " + path);
+                } catch (Exception e) {
+                    Gdx.app.error("Assets", "Failed to load " + path + ": " + e.getMessage());
+                }
             }
 
-            // Flip all UI textures vertically using TextureRegion
-            hiScoreTexture = flip("sprites/ui/hi-score.png");
-            iPlayerTexture = flip("sprites/ui/i-player.png");
-            iiPlayerTexture = flip("sprites/ui/ii-player.png");
-            ptsTexture = flip("sprites/ui/pts.png");
-            totalTexture = flip("sprites/ui/total.png");
-            tankIconTexture = flip("sprites/ui/tank-icon.png");
-            arrowTexture = flip("sprites/ui/arrow.png");
+            // Load and flip UI textures
+            hiScoreTexture = flipTexture("sprites/ui/hi-score.png");
+            stageTexture = flipTexture("sprites/ui/stage.png");
+            iPlayerTexture = flipTexture("sprites/ui/i-player.png");
+            iiPlayerTexture = flipTexture("sprites/ui/ii-player.png");
+            ptsTexture = flipTexture("sprites/ui/pts.png");
+            totalTexture = flipTexture("sprites/ui/total.png");
+            tankIconTexture = flipTexture("sprites/ui/tank-icon.png");
+            arrowTexture = flipTexture("sprites/ui/arrow.png");
 
-            Gdx.app.log("Assets", "Score screen textures flipped and loaded.");
+            Gdx.app.log("Assets", "Score screen textures loaded successfully");
+            Gdx.app.log("Assets", "hiScoreTexture: " + (hiScoreTexture != null));
+            Gdx.app.log("Assets", "stageTexture: " + (stageTexture != null));
+            Gdx.app.log("Assets", "iPlayerTexture: " + (iPlayerTexture != null));
+            Gdx.app.log("Assets", "iiPlayerTexture: " + (iiPlayerTexture != null));
+            Gdx.app.log("Assets", "ptsTexture: " + (ptsTexture != null));
+            Gdx.app.log("Assets", "totalTexture: " + (totalTexture != null));
+            Gdx.app.log("Assets", "tankIconTexture: " + (tankIconTexture != null));
+            Gdx.app.log("Assets", "arrowTexture: " + (arrowTexture != null));
         } catch (Exception e) {
-            Gdx.app.error("Assets", "Error loading score screen textures: " + e.getMessage());
+            Gdx.app.error("Assets", "Error loading score screen textures: " + e.getMessage(), e);
         }
     }
 
-    public static Texture flip(String path) {
-        Texture tex = new Texture(Gdx.files.internal(path));
-        TextureRegion reg = new TextureRegion(tex);
-        reg.flip(false, true);
-        Pixmap pixmap = reg.getTexture().getTextureData().consumePixmap();
-        Texture flipped = new Texture(pixmap);
-        pixmap.dispose();
-        tex.dispose();
-        return flipped;
+    private static Texture flipTexture(String path) {
+        try {
+            Texture tex = new Texture(Gdx.files.internal(path));
+            TextureRegion reg = new TextureRegion(tex);
+            reg.flip(false, true);
+            Pixmap pixmap = tex.getTextureData().consumePixmap();
+            Texture flipped = new Texture(pixmap);
+            pixmap.dispose();
+            tex.dispose();
+            return flipped;
+        } catch (Exception e) {
+            Gdx.app.error("Assets", "Error flipping texture " + path + ": " + e.getMessage());
+            return null;
+        }
     }
-
 
     public static void loadExplosionAnimation() {
         try {
@@ -342,79 +358,73 @@ public class Assets {
             explosionFrames = new TextureRegion[4];
             for (int i = 0; i < 4; i++) {
                 String filePath = "sprites/effects/explosion" + (i + 1) + ".png";
-                System.out.println("этот бро  по идее должен заработать");
                 try {
                     explosionTextures[i] = new Texture(Gdx.files.internal(filePath));
                     explosionFrames[i] = new TextureRegion(explosionTextures[i]);
-                    // Переворачиваем текстуру по вертикали для соответствия системе координат
                     explosionFrames[i].flip(false, true);
-                    Gdx.app.log("Assets", "Успешно загружен " + filePath);
+                    Gdx.app.log("Assets", "Successfully loaded " + filePath);
                 } catch (Exception e) {
-                    Gdx.app.error("Assets", "Не удалось загрузить " + filePath + ": " + e.getMessage());
+                    Gdx.app.error("Assets", "Failed to load " + filePath + ": " + e.getMessage());
                     throw e;
                 }
             }
-            // Увеличиваем длительность кадра для лучшей видимости
             explosionAnimation = new Animation<>(0.15f, explosionFrames);
-            Gdx.app.log("Assets", "Успешно загружена анимация взрыва с 4 кадрами");
+            Gdx.app.log("Assets", "Successfully loaded explosion animation with 4 frames");
         } catch (Exception e) {
-            Gdx.app.error("Assets", "Ошибка загрузки анимации взрыва: " + e.getMessage());
+            Gdx.app.error("Assets", "Error loading explosion animation: " + e.getMessage());
             explosionAnimation = null;
         }
     }
 
-public static void dispose() {
-    if (textureBack != null) textureBack.dispose();
-    if (yellowTankRight1_Texture != null) yellowTankRight1_Texture.dispose();
-    if (yellowTankRight2_Texture != null) yellowTankRight2_Texture.dispose();
-    if (selectionSound != null) selectionSound.dispose();
-    if (levelBeginSound != null) levelBeginSound.dispose();
-    if (explosionSound != null) explosionSound.dispose();
-    if (hitSound != null) hitSound.dispose();
-    if (tileSet != null) tileSet.dispose();
-    if (pauseTexture != null) pauseTexture.dispose();
-    if (gameOverTexture != null) gameOverTexture.dispose();
-    if (enemyIcon != null) enemyIcon.dispose();
-    if (healthIcon != null) healthIcon.dispose();
-    if (pixel != null) pixel.dispose();
-    if (curtainTexture != null) curtainTexture.dispose();
-    if (stageTexture != null) stageTexture.dispose();
+    public static void dispose() {
+        if (textureBack != null) textureBack.dispose();
+        if (yellowTankRight1_Texture != null) yellowTankRight1_Texture.dispose();
+        if (yellowTankRight2_Texture != null) yellowTankRight2_Texture.dispose();
+        if (selectionSound != null) selectionSound.dispose();
+        if (levelBeginSound != null) levelBeginSound.dispose();
+        if (explosionSound != null) explosionSound.dispose();
+        if (hitSound != null) hitSound.dispose();
+        if (tileSet != null) tileSet.dispose();
+        if (pauseTexture != null) pauseTexture.dispose();
+        if (gameOverTexture != null) gameOverTexture.dispose();
+        if (enemyIcon != null) enemyIcon.dispose();
+        if (healthIcon != null) healthIcon.dispose();
+        if (pixel != null) pixel.dispose();
+        if (curtainTexture != null) curtainTexture.dispose();
+        if (stageTexture != null) stageTexture.dispose();
 
-    // Dispose explosion textures
-    if (explosionTextures != null) {
-        for (Texture texture : explosionTextures) {
-            if (texture != null) texture.dispose();
+        if (explosionTextures != null) {
+            for (Texture texture : explosionTextures) {
+                if (texture != null) texture.dispose();
+            }
         }
+
+        if (numberTextures != null) {
+            for (Texture texture : numberTextures) {
+                if (texture != null) texture.dispose();
+            }
+        }
+
+        if (digitTextures != null) {
+            for (Texture texture : digitTextures) {
+                if (texture != null) texture.dispose();
+            }
+        }
+
+        if (hiScoreTexture != null) hiScoreTexture.dispose();
+        if (iPlayerTexture != null) iPlayerTexture.dispose();
+        if (iiPlayerTexture != null) iiPlayerTexture.dispose();
+        if (ptsTexture != null) ptsTexture.dispose();
+        if (totalTexture != null) totalTexture.dispose();
+        if (tankIconTexture != null) tankIconTexture.dispose();
+        if (arrowTexture != null) arrowTexture.dispose();
+
+        // Dispose all animations
+        disposeAnimations();
     }
 
-    // Dispose number textures
-    if (numberTextures != null) {
-        for (Texture texture : numberTextures) {
-            if (texture != null) texture.dispose();
-        }
+    private static void disposeAnimations() {
+        // Note: Animations use textures that are already disposed elsewhere,
+        // so no additional disposal is needed here
     }
-
-    // Dispose score screen textures
-    if (digitTextures != null) {
-        for (Texture texture : digitTextures) {
-            if (texture != null) texture.dispose();
-        }
-    }
-    if (hiScoreTexture != null) hiScoreTexture.dispose();
-    if (iPlayerTexture != null) iPlayerTexture.dispose();
-    if (iiPlayerTexture != null) iiPlayerTexture.dispose();
-    if (ptsTexture != null) ptsTexture.dispose();
-    if (totalTexture != null) totalTexture.dispose();
-    if (tankIconTexture != null) tankIconTexture.dispose();
-    if (arrowTexture != null) arrowTexture.dispose();
-
-    // Dispose all animations
-    disposeAnimations();
-}
-
-private static void disposeAnimations() {
-    // This method would dispose all animation textures if needed
-    // Note: Since animations use textures that are already disposed elsewhere,
-    // we don't need to dispose them again here
-}
 }

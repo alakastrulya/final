@@ -16,6 +16,8 @@ public class Bullet {
     private boolean active;
     private boolean fromEnemy;
     private static final float SPEED = 5.0f;
+    private String color;
+
 
     public Bullet(float startX, float startY, Tank.Direction direction, String tankColour) {
         this(startX, startY, direction, tankColour, false);
@@ -27,6 +29,8 @@ public class Bullet {
         this.direction = direction;
         this.active = true;
         this.fromEnemy = fromEnemy;
+        this.color = tankColour;
+
 
         Pixmap pixmap = new Pixmap(4, 4, Pixmap.Format.RGBA8888);
         if (tankColour.equals("yellow")) {
@@ -89,6 +93,9 @@ public class Bullet {
 
     public boolean isFromEnemy() {
         return fromEnemy;
+    }
+    public String getColor() {
+        return color;
     }
 
     public void dispose() {
