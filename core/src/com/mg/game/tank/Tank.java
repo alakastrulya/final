@@ -1,15 +1,18 @@
-package com.mg.game;
+package com.mg.game.tank;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.GameScreen;
+import com.mg.game.bullet.Bullet;
+import com.mg.game.bullet.BulletFactory;
+import com.mg.game.assets.Assets;
+import com.mg.game.strategy.EnemyStrategy;
+import com.mg.game.tank.state.StandingByState;
 
 import java.util.Random;
 
 public class Tank {
-    // Перечисление для направлений
     public enum Direction {
         FORWARD, BACKWARD, LEFT, RIGHT
     }
@@ -23,43 +26,48 @@ public class Tank {
     private float stateTime;
     private Random random;
     private float shootTimer;
-    private static final float SHOOT_DELAY = 2.0f; // Задержка между выстрелами врага
+    private static final float SHOOT_DELAY = 2.0f;
 
-    // Переменные для здоровья и неуязвимости
     private int health;
     private float invulnerabilityTimer;
-    private static final float INVULNERABILITY_TIME = 2.0f; // секунды
+    private static final float INVULNERABILITY_TIME = 2.0f;
 
     public int positionX;
     public int positionY;
 
-    // Поле для текущего состояния
     private TankState currentState;
+    private EnemyStrategy strategy;
+
+    private GameScreen screen; // Новое поле
+
+    public Tank() {}
 
     public Tank(String colour, int level, boolean isEnemy) {
+        this(colour, level, isEnemy, null);
+    }
+
+    public Tank(String colour, int level, boolean isEnemy, GameScreen screen) {
         this.colour = colour;
         this.level = level;
         this.isEnemy = isEnemy;
-        this.direction = Direction.FORWARD; // По умолчанию смотрит вперед
+        this.screen = screen;
+        this.direction = Direction.FORWARD;
         this.isMoving = false;
         this.random = new Random();
         this.shootTimer = 0;
 
-        // Инициализация здоровья
-        this.health = isEnemy ? 1 : 3; // Враги умирают с одного выстрела, игроки с трех
+        this.health = isEnemy ? 1 : 3;
         this.invulnerabilityTimer = 0;
 
-        // Если это враг, выбираем случайное направление
         if (isEnemy) {
             chooseRandomDirection();
         }
 
-        // Устанавливаем начальное состояние
         try {
             this.currentState = new StandingByState(this);
         } catch (Exception e) {
             Gdx.app.error("Tank", "Failed to initialize StandingByState: " + e.getMessage());
-            this.currentState = null; // Устанавливаем null как запасной вариант
+            this.currentState = null;
         }
     }
 
@@ -72,90 +80,77 @@ public class Tank {
                 Gdx.app.error("Tank", "Error handling input: " + e.getMessage());
             }
         }
-        // Обновляем текущий кадр через состояние или по умолчанию
         currentFrame = getCurrentFrame();
     }
 
     public void moveUp() {
-        positionY--;
+        int newY = positionY - 1;
+        if (screen != null && GameScreen.canMoveTo(this, positionX, newY, screen)) {
+            positionY = newY;
+            Gdx.app.log("Tank", colour + " moved up to y=" + positionY);
+        } else {
+            Gdx.app.log("Tank", colour + " cannot move up to y=" + newY);
+        }
     }
 
     public void moveDown() {
-        positionY++;
+        int newY = positionY + 1;
+        if (screen != null && GameScreen.canMoveTo(this, positionX, newY, screen)) {
+            positionY = newY;
+            Gdx.app.log("Tank", colour + " moved down to y=" + positionY);
+        } else {
+            Gdx.app.log("Tank", colour + " cannot move down to y=" + newY);
+        }
     }
 
     public void moveLeft() {
-        positionX--;
+        int newX = positionX - 1;
+        if (screen != null && GameScreen.canMoveTo(this, newX, positionY, screen)) {
+            positionX = newX;
+            Gdx.app.log("Tank", colour + " moved left to x=" + positionX);
+        } else {
+            Gdx.app.log("Tank", colour + " cannot move left to x=" + newX);
+        }
     }
 
     public void moveRight() {
-        positionX++;
+        int newX = positionX + 1;
+        if (screen != null && GameScreen.canMoveTo(this, newX, positionY, screen)) {
+            positionX = newX;
+            Gdx.app.log("Tank", colour + " moved right to x=" + positionX);
+        } else {
+            Gdx.app.log("Tank", colour + " cannot move right to x=" + newX);
+        }
     }
 
     public Bullet shoot() {
-        // Создаем снаряд в зависимости от направления танка
         float bulletX = positionX;
         float bulletY = positionY;
 
-        // Корректируем начальную позицию снаряда в зависимости от направления
         switch (direction) {
             case FORWARD:
-                bulletX += 13; // Центр танка по X
-                bulletY += 26; // Перед танка по Y
+                bulletX += 13;
+                bulletY += 26;
                 break;
             case BACKWARD:
-                bulletX += 13; // Центр танка по X
-                bulletY -= 4; // За танком по Y
+                bulletX += 13;
+                bulletY -= 4;
                 break;
             case LEFT:
-                bulletX -= 4; // Слева от танка по X
-                bulletY += 13; // Центр танка по Y
+                bulletX -= 4;
+                bulletY += 13;
                 break;
             case RIGHT:
-                bulletX += 26; // Справа от танка по X
-                bulletY += 13; // Центр танка по Y
+                bulletX += 26;
+                bulletY += 13;
                 break;
         }
 
-        return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
+        BulletFactory bulletFactory = new BulletFactory(bulletX, bulletY, direction, colour, isEnemy);
+        return bulletFactory.create();
     }
 
-    // Добавьте эти методы в класс Tank для улучшения AI врагов
-    public void improveEnemyAI(float delta, Tank player1, Tank player2) {
-        // Обновляем таймер неуязвимости
-        if (isInvulnerable()) {
-            invulnerabilityTimer -= delta;
-        }
-
-        // Продолжаем только если это вражеский танк
-        if (!isEnemy) {
-            return;
-        }
-
-        // Проверяем, есть ли игрок на линии огня
-        Tank targetPlayer = null;
-
-        if (player1 != null && player1.isAlive()) {
-            if (isInLineOfSight(player1)) {
-                targetPlayer = player1;
-            }
-        }
-
-        if (targetPlayer == null && player2 != null && player2.isAlive()) {
-            if (isInLineOfSight(player2)) {
-                targetPlayer = player2;
-            }
-        }
-
-        // Если игрок на линии огня, увеличиваем шанс выстрела
-        if (targetPlayer != null && Math.random() < 0.1) { // 10% шанс выстрелить, когда игрок на линии огня
-            shoot();
-        }
-    }
-
-    // Добавьте этот метод для проверки, находится ли игрок на линии огня
-    private boolean isInLineOfSight(Tank player) {
-        // Проверяем, находится ли игрок в том же ряду или колонке
+    public boolean isInLineOfSight(Tank player) {
         boolean sameRow = Math.abs(this.positionY - player.positionY) < 10;
         boolean sameColumn = Math.abs(this.positionX - player.positionX) < 10;
 
@@ -163,7 +158,6 @@ public class Tank {
             return false;
         }
 
-        // Определяем направление для проверки
         int dx = 0;
         int dy = 0;
 
@@ -173,7 +167,6 @@ public class Tank {
             dy = (player.positionY > this.positionY) ? 1 : -1;
         }
 
-        // Проверяем, соответствует ли текущее направление линии огня
         boolean correctDirection = false;
 
         switch (direction) {
@@ -194,8 +187,6 @@ public class Tank {
         return correctDirection;
     }
 
-
-
     public void chooseRandomDirection() {
         int dir = random.nextInt(4);
         switch (dir) {
@@ -215,7 +206,6 @@ public class Tank {
     }
 
     public TextureRegion getCurrentFrame() {
-        // Возвращаем текущий кадр через состояние, если оно доступно
         if (currentState != null) {
             try {
                 return currentState.getCurrentFrame(stateTime);
@@ -224,7 +214,6 @@ public class Tank {
             }
         }
 
-        // Возвращаем кадр по умолчанию, если состояние не установлено или произошла ошибка
         try {
             switch (direction) {
                 case FORWARD:
@@ -240,35 +229,27 @@ public class Tank {
             }
         } catch (Exception e) {
             Gdx.app.error("Tank", "Error getting default frame: " + e.getMessage());
-            return null; // Возвращаем null, если не удалось получить кадр
+            return null;
         }
     }
 
     public boolean collidesWith(Tank other) {
-        // Проверяем пересечение прямоугольников танков
         Rectangle thisBounds = getBounds();
         Rectangle otherBounds = other.getBounds();
         return thisBounds.overlaps(otherBounds);
     }
 
     public Rectangle getBounds() {
-        // Возвращаем прямоугольник, представляющий границы танка
         return new Rectangle(positionX, positionY, 26, 26);
     }
 
     public boolean takeDamage() {
-        // Если танк неуязвим, урон не наносится
         if (isInvulnerable()) {
             return false;
         }
 
-        // Уменьшаем здоровье
         health--;
-
-        // Делаем танк временно неуязвимым
         invulnerabilityTimer = INVULNERABILITY_TIME;
-
-        // Возвращаем true, если танк уничтожен
         return health <= 0;
     }
 
@@ -281,10 +262,25 @@ public class Tank {
     }
 
     public void update(float delta) {
-        // Уменьшаем таймер неуязвимости
         if (invulnerabilityTimer > 0) {
             invulnerabilityTimer -= delta;
         }
+    }
+
+    public void setStrategy(EnemyStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public void performStrategy(float delta, GameScreen context) {
+        if (strategy != null) strategy.update(this, delta, context);
+    }
+
+    public EnemyStrategy getStrategy() {
+        return strategy;
+    }
+
+    public void reduceInvulnerability(float delta) {
+        if (invulnerabilityTimer > 0) invulnerabilityTimer -= delta;
     }
 
     public void setDirection(Direction direction) {
@@ -318,6 +314,4 @@ public class Tank {
     public void setHealth(int health) {
         this.health = health;
     }
-
-
 }

@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.assets;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;

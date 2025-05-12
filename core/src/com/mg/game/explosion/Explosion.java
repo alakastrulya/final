@@ -1,8 +1,9 @@
-package com.mg.game;
+package com.mg.game.explosion;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.mg.game.assets.Assets;
 
 public class Explosion {
     private float positionX;

@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.level;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -8,7 +8,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
-import com.badlogic.gdx.utils.Align;
+import com.mg.game.GameScreen;
+import com.mg.game.gdxGame;
 
 public class LevelCompleteScreen implements Screen {
     private gdxGame game;

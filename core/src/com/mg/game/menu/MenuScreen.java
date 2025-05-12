@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.menu;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -6,6 +6,9 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.mg.game.assets.Assets;
+import com.mg.game.GameScreen;
+import com.mg.game.gdxGame;
 
 public class MenuScreen implements Screen{
 
@@ -15,7 +18,7 @@ public class MenuScreen implements Screen{
     private int selectorPosition = 305;
     private float stateTime;
 
-    MenuScreen(gdxGame game){
+    public MenuScreen(gdxGame game){
         this.game = game;
         camera = new OrthographicCamera();
         camera.setToOrtho(true, 640, 480);

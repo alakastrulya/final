@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.tank;
 
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 
