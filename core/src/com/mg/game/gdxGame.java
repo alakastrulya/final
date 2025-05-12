@@ -12,12 +12,12 @@ public class gdxGame extends Game {
 	public MenuScreen menuScreen;
 	private static boolean gameOverFlag = false;
 
-	// Новый: список наблюдателей
+	// New: list of observers
 	private static final List<GameObserver> observers = new ArrayList<>();
 
 	public static void setGameOverFlag() {
 		gameOverFlag = true;
-		notifyBaseDestroyed(); // теперь уведомляем всех
+		notifyBaseDestroyed(); // now notify everyone
 	}
 
 	public static boolean isGameOver() {
@@ -34,7 +34,7 @@ public class gdxGame extends Game {
 		setScreen(menuScreen);
 	}
 
-	// Методы управления подписчиками
+	// Methods for managing subscribers
 	public static void addObserver(GameObserver observer) {
 		if (!observers.contains(observer)) {
 			observers.add(observer);

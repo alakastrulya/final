@@ -39,7 +39,7 @@ public class Tank {
     private TankState currentState;
     private EnemyStrategy strategy;
 
-    private GameScreen screen; // Новое поле
+    private GameScreen screen; // New field
 
     public Tank() {}
 

@@ -103,7 +103,7 @@ public class GameScreen implements Screen, GameObserver {
     private int player1Score = 0;
     private int player2Score = 0;
 
-    private int[] player1PointsBreakdown = new int[4]; // 4 типа танков
+    private int[] player1PointsBreakdown = new int[4]; // 4 types of tanks
     private int[] player2PointsBreakdown = new int[4];
     private BulletManager bulletManager;
 
@@ -160,7 +160,7 @@ public class GameScreen implements Screen, GameObserver {
             @Override
             public void onBaseDestroyed() {
                 gameOver = true;
-                Gdx.app.log("Observer", "База уничтожена. Устанавливаем gameOver = true");
+                Gdx.app.log("Observer", "Base destroyed. Setting gameOver = true");
             }
         });
         this.currentLevel = level;
@@ -321,7 +321,7 @@ public class GameScreen implements Screen, GameObserver {
             levelCompleteTimer += delta;
 
             if (levelCompleteTimer >= LEVEL_COMPLETE_DELAY) {
-                // Собираем реальные данные
+                // Collect real data
                 int[] tankCounts = new int[4];
                 for (int i = 0; i < 4; i++) {
                     tankCounts[i] = (player1PointsBreakdown[i] + player2PointsBreakdown[i]) / 100;

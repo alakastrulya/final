@@ -15,19 +15,19 @@ public class InputHandler {
     private int playerCount;
     private GameScreen gameScreen;
 
-    // Команды для игрока 1
+    // Commands for player 1
     private Command player1MoveUp;
     private Command player1MoveDown;
     private Command player1MoveLeft;
     private Command player1MoveRight;
-    private ShootCommand player1Shoot; // Явно ShootCommand
+    private ShootCommand player1Shoot; // Specifically ShootCommand
 
-    // Команды для игрока 2 (если есть)
+    // Commands for player 2 (if present)
     private Command player2MoveUp;
     private Command player2MoveDown;
     private Command player2MoveLeft;
     private Command player2MoveRight;
-    private ShootCommand player2Shoot; // Явно ShootCommand
+    private ShootCommand player2Shoot; // Specifically ShootCommand
 
     public InputHandler(Tank player1, Tank player2, ArrayList<Bullet> bullets, int playerCount, GameScreen gameScreen) {
         this.player1 = player1;
@@ -36,27 +36,27 @@ public class InputHandler {
         this.playerCount = playerCount;
         this.gameScreen = gameScreen;
 
-        // Инициализация команд для игрока 1
+        // Initialize commands for player 1
         player1MoveUp = new MoveUpCommand(player1, gameScreen, true);
         player1MoveDown = new MoveDownCommand(player1, gameScreen, true);
         player1MoveLeft = new MoveLeftCommand(player1, gameScreen, true);
         player1MoveRight = new MoveRightCommand(player1, gameScreen, true);
-        player1Shoot = new ShootCommand(player1, playerCount == 2, bullets); // Enter в парном, пробел в одиночном
+        player1Shoot = new ShootCommand(player1, playerCount == 2, bullets); // Enter in multiplayer, space in singleplayer
 
-        // Инициализация команд для игрока 2 (если парный режим)
+        // Initialize commands for player 2 (if multiplayer mode)
         if (playerCount == 2 && player2 != null) {
             player2MoveUp = new MoveUpCommand(player2, gameScreen, false);
             player2MoveDown = new MoveDownCommand(player2, gameScreen, false);
             player2MoveLeft = new MoveLeftCommand(player2, gameScreen, false);
             player2MoveRight = new MoveRightCommand(player2, gameScreen, false);
-            player2Shoot = new ShootCommand(player2, false, bullets); // Всегда пробел
+            player2Shoot = new ShootCommand(player2, false, bullets); // Always space
         }
     }
 
     public void handleInput(float delta) {
-        // Обработка ввода для игрока 1
+        // Handle input for player 1
         if (player1 != null && player1.isAlive()) {
-            // Движение
+            // Movement
             if (player1MoveUp.canExecute()) {
                 player1MoveUp.execute();
             }
@@ -69,16 +69,16 @@ public class InputHandler {
             if (player1MoveRight.canExecute()) {
                 player1MoveRight.execute();
             }
-            // Стрельба
-            player1Shoot.update(delta); // Теперь работает, так как player1Shoot — ShootCommand
+            // Shooting
+            player1Shoot.update(delta); // Works now since player1Shoot is ShootCommand
             if (player1Shoot.canExecute()) {
                 player1Shoot.execute();
             }
         }
 
-        // Обработка ввода для игрока 2 (только в парном режиме)
+        // Handle input for player 2 (only in multiplayer)
         if (playerCount == 2 && player2 != null && player2.isAlive()) {
-            // Движение
+            // Movement
             if (player2MoveUp.canExecute()) {
                 player2MoveUp.execute();
             }
@@ -91,9 +91,9 @@ public class InputHandler {
             if (player2MoveRight.canExecute()) {
                 player2MoveRight.execute();
             }
-            // Стрельба
+            // Shooting
             if (player2Shoot != null) {
-                player2Shoot.update(delta); // Теперь работает, так как player2Shoot — ShootCommand
+                player2Shoot.update(delta); // Works now since player2Shoot is ShootCommand
                 if (player2Shoot.canExecute()) {
                     player2Shoot.execute();
                 }

@@ -36,14 +36,14 @@ public class BulletManager {
 
             bullet.update(delta);
 
-            // Удаление при выходе за границы
+            // Remove bullet if it goes out of bounds
             if (!bullet.isActive()) {
                 bullet.dispose();
                 iterator.remove();
                 continue;
             }
 
-            // Коллизии
+            // Collisions
             if (checkCollision(bullet)) {
                 bullet.deactivate();
                 bullet.dispose();
@@ -53,7 +53,7 @@ public class BulletManager {
     }
 
     private boolean checkCollision(Bullet bullet) {
-        // Столкновение с картой
+        // Collision with map tiles
         for (MapTile tile : screen.getMapTiles()) {
             if (tile.isSolid && bullet.getBounds().overlaps(tile.getBounds(screen.getTileSize(), screen.getTileScale(), screen.getOffsetX(), screen.getOffsetY()))) {
                 if (tile.isDestructible) tile.takeHit();
@@ -63,7 +63,7 @@ public class BulletManager {
             }
         }
 
-        // Столкновение с врагами
+        // Collision with enemies
         for (Tank enemy : screen.getEnemies()) {
             if (enemy != null && enemy.isAlive() && bullet.getBounds().overlaps(enemy.getBounds())) {
                 boolean wasKilled = enemy.takeDamage();
@@ -72,7 +72,7 @@ public class BulletManager {
                     explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
                     if (explosionSound != null) explosionSound.play();
 
-                    // Добавление очков игроку
+                    // Add score to the player
                     if (!bullet.isFromEnemy()) {
                         String color = bullet.getColor();
                         if ("yellow".equalsIgnoreCase(color)) {

@@ -56,28 +56,28 @@ public class LevelCompleteScreen implements Screen {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // === HI-SCORE ===
+        // HI-SCORE
         pixelFont.setColor(Color.RED);
-        pixelFont.draw(batch, "HI-SCORE", 160, 460); // немного левее
+        pixelFont.draw(batch, "HI-SCORE", 160, 460); // a bit to the left
         pixelFont.setColor(Color.GOLD);
-        pixelFont.draw(batch, String.valueOf(hiScore), 375, 460); // правее и без ведущих нулей
+        pixelFont.draw(batch, String.valueOf(hiScore), 375, 460); // to the right, no leading zeros
 
-        // === STAGE ===
+        // STAGE
         fontLarge.setColor(Color.WHITE);
         GlyphLayout stageLayout = new GlyphLayout(fontLarge, "STAGE " + level);
         fontLarge.draw(batch, stageLayout, (640 - stageLayout.width) / 2, 400);
 
-        // === Player labels ===
+        // Player labels
         pixelFont.setColor(Color.RED);
         pixelFont.draw(batch, "I-PLAYER", 80, 340);
         if (isTwoPlayer) pixelFont.draw(batch, "II-PLAYER", 350, 340);
 
-        // === Player scores ===
+        // Player scores
         pixelFont.setColor(Color.GOLD);
         pixelFont.draw(batch, String.format("%04d", player1Score), 200, 305);
         if (isTwoPlayer) pixelFont.draw(batch, String.format("%04d", player2Score), 520, 305);
 
-        // === Score breakdown ===
+        // Score breakdown
         for (int i = 0; i < 4; i++) {
             int y = 250 - i * 30;
 
@@ -96,7 +96,7 @@ public class LevelCompleteScreen implements Screen {
             }
         }
 
-        // === TOTAL score ===
+        // TOTAL score
         int totalScore = 0;
         for (int i = 0; i < 4; i++) {
             totalScore += player1Breakdown[i] * 100;

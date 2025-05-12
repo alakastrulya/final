@@ -16,7 +16,7 @@ public class WanderStrategy implements EnemyStrategy {
 
         shootCooldown -= delta;
 
-        // Простое случайное движение
+        // Simple random movement
         if (Math.random() < 0.02) {
             int dir = (int) (Math.random() * 4);
             switch (dir) {
@@ -35,7 +35,7 @@ public class WanderStrategy implements EnemyStrategy {
             }
         }
 
-        // Иногда стреляет просто вперёд
+        // Occasionally shoots forward
         if (shootCooldown <= 0 && Math.random() < 0.1) {
             enemy.shoot();
             shootCooldown = 1.5f;

@@ -14,11 +14,11 @@ public class BaseAttackStrategy implements EnemyStrategy {
             enemy.reduceInvulnerability(delta);
         }
 
-        // Получаем координаты базы
+        // Get base coordinates
         int baseX = context.getBaseX();
         int baseY = context.getBaseY();
 
-        // Двигаемся к базе
+        // Move toward the base
         int dx = baseX - enemy.positionX;
         int dy = baseY - enemy.positionY;
 
@@ -28,15 +28,15 @@ public class BaseAttackStrategy implements EnemyStrategy {
             enemy.setDirection(dy > 0 ? Tank.Direction.BACKWARD : Tank.Direction.FORWARD);
         }
 
-        // Проверяем наличие базы
+        // Check if the base exists
         MapTile baseTile = context.getBaseTile();
         if (baseTile != null) {
-            // Создаем временный "фейковый" танк с позицией базы
+            // Create a temporary "dummy" tank at the base's position
             Tank dummyBase = new Tank();
             dummyBase.positionX = baseX;
             dummyBase.positionY = baseY;
 
-            // Если видим базу или рядом с ней — стреляем
+            // If enemy sees the base or is close to it — shoot
             boolean closeEnough = enemy.getBounds().overlaps(dummyBase.getBounds());
             boolean seesBase = enemy.isInLineOfSight(dummyBase);
 

@@ -13,18 +13,18 @@ public class Explosion {
     private boolean finished;
 
     public Explosion(float x, float y) {
-        // Центрируем взрыв относительно точки попадания
-        this.positionX = x - 14; // Смещаем на половину размера взрыва
-        this.positionY = y - 14; // Смещаем на половину размера взрыва
+        // Center the explosion around the impact point
+        this.positionX = x - 14; // Shift by half the explosion size
+        this.positionY = y - 14; // Shift by half the explosion size
         this.animation = Assets.explosionAnimation;
         this.stateTime = 0f;
-        this.finished = (animation == null); // Если анимация не загрузилась, сразу завершаем
+        this.finished = (animation == null); // If animation is not loaded, mark as finished
 
-        // Добавляем лог для отладки
+        // Add log for debugging
         if (animation == null) {
-            Gdx.app.error("Explosion", "Анимация взрыва не загружена");
+            Gdx.app.error("Explosion", "Explosion animation not loaded");
         } else {
-            Gdx.app.log("Explosion", "Создан взрыв на позиции " + positionX + ", " + positionY);
+            Gdx.app.log("Explosion", "Explosion created at position " + positionX + ", " + positionY);
         }
     }
 
@@ -35,22 +35,22 @@ public class Explosion {
         }
         stateTime += delta;
 
-        // Проверяем, завершилась ли анимация
+        // Check if the animation is finished
         if (animation.getAnimationDuration() <= stateTime) {
             finished = true;
-            Gdx.app.log("Explosion", "Анимация взрыва завершена после " + stateTime + " секунд");
+            Gdx.app.log("Explosion", "Explosion animation finished after " + stateTime + " seconds");
         }
     }
 
     public TextureRegion getCurrentFrame() {
         if (animation == null) {
-            Gdx.app.error("Explosion", "Попытка получить кадр из null анимации");
+            Gdx.app.error("Explosion", "Tried to get frame from null animation");
             return null;
         }
 
-        TextureRegion frame = animation.getKeyFrame(stateTime, false); // false означает, что анимация не зацикливается
+        TextureRegion frame = animation.getKeyFrame(stateTime, false); // false means animation doesn't loop
         if (frame == null) {
-            Gdx.app.error("Explosion", "Получен null кадр для времени " + stateTime);
+            Gdx.app.error("Explosion", "Null frame returned for time " + stateTime);
         }
         return frame;
     }

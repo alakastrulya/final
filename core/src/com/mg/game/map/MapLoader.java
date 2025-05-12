@@ -16,22 +16,22 @@ public class MapLoader {
 
         FileHandle mapHandle = Gdx.files.internal(mapPath);
         if (!mapHandle.exists()) {
-            Gdx.app.error("MapLoader", "Файл карты не найден: " + mapPath);
+            Gdx.app.error("MapLoader", "Map file not found: " + mapPath);
             return;
         }
 
         FileHandle sheetHandle = Gdx.files.internal("sprites/tiles/tileset.png");
         if (!sheetHandle.exists()) {
-            Gdx.app.error("MapLoader", "Тайлсет не найден: sprites/tiles/tileset.png");
+            Gdx.app.error("MapLoader", "Tileset not found: sprites/tiles/tileset.png");
             return;
         }
 
         Texture sheet = new Texture(sheetHandle);
 
-        // Судя по скриншоту, орёл уже найден правильно, но нужно настроить размер
+        // According to the screenshot, the eagle is found correctly, but we need to adjust the size
         String[] lines = mapHandle.readString().split("\\r?\\n");
 
-        // Найдем координаты базы в карте
+        // Find base (eagle) coordinates in the map
         int baseMapRow = -1;
         int baseMapCol = -1;
 
@@ -44,7 +44,7 @@ public class MapLoader {
             int mapCol = Integer.parseInt(parts[1].trim());
             int tileRow = Integer.parseInt(parts[2].trim());
             int tileCol = Integer.parseInt(parts[3].trim());
-            // Пропускаем все 4 тайла базы, чтобы не перезаписать их
+            // Skip all 4 base tiles to avoid overwriting
             if ((mapRow == baseMapRow && mapCol == baseMapCol) ||
                     (mapRow == baseMapRow && mapCol == baseMapCol + 1) ||
                     (mapRow == baseMapRow + 1 && mapCol == baseMapCol) ||
@@ -52,8 +52,7 @@ public class MapLoader {
                 continue;
             }
 
-
-            // Находим базу (орёл) в файле карты
+            // Detect the base (eagle) in the map file
             if (tileRow == 2 && tileCol == 3) {
                 baseMapRow = mapRow;
                 baseMapCol = mapCol - 1;
@@ -61,12 +60,12 @@ public class MapLoader {
             }
         }
 
-        // Если нашли базу, создаем для неё тайл 2×2
+        // If base found, create 2x2 tile for it
         if (baseMapRow != -1 && baseMapCol != -1) if (baseMapRow != -1 && baseMapCol != -1) {
             int eagleSheetRow = 0;
             int eagleSheetCol = 0;
 
-            // Оригинальный орёл 32×32 (разбиваем на 4 части 16×16)
+            // Original eagle 32×32 (split into four 16×16 parts)
 
             TextureRegion fullEagle = new TextureRegion(
                     sheet,
@@ -86,7 +85,7 @@ public class MapLoader {
             );
             fullBroken.flip(true, true);
 
-            // Разбиваем на 4 части (левый верхний, правый верхний, нижние два)
+            // Split into 4 parts (top-left, top-right, bottom two)
             TextureRegion[][] eagleParts = fullEagle.split(TILE_SIZE, TILE_SIZE);
             TextureRegion[][] brokenParts = fullBroken.split(TILE_SIZE, TILE_SIZE);
 
@@ -102,10 +101,10 @@ public class MapLoader {
                 }
             }
 
-            Gdx.app.log("MapLoader", "База (орёл) 2x2 создана на позициях: (" + baseMapCol + "," + baseMapRow + ") до (" + (baseMapCol + 1) + "," + (baseMapRow + 1) + ")");
+            Gdx.app.log("MapLoader", "Base (eagle) 2x2 created at: (" + baseMapCol + "," + baseMapRow + ") to (" + (baseMapCol + 1) + "," + (baseMapRow + 1) + ")");
         }
 
-        // Загружаем остальные тайлы
+        // Load remaining tiles
         for (String raw : lines) {
             String line = raw.trim();
             if (line.isEmpty()) continue;
@@ -116,7 +115,7 @@ public class MapLoader {
             int tileRow = Integer.parseInt(parts[2].trim());
             int tileCol = Integer.parseInt(parts[3].trim());
 
-            // Пропускаем базу, мы уже её создали
+            // Skip the base — it's already added
             if (tileRow == 2 && tileCol == 3) {
                 continue;
             }
@@ -133,11 +132,11 @@ public class MapLoader {
             boolean isDestructible = false;
             TextureRegion damaged = null;
 
-            if (tileRow == 0 && tileCol == 0) {         // кирпич
+            if (tileRow == 0 && tileCol == 0) {         // brick
                 isSolid = true;
                 isDestructible = true;
                 damaged = new TextureRegion(sheet, TILE_SIZE, 0, TILE_SIZE, TILE_SIZE);
-            } else if (tileRow == 1 && tileCol == 0) {  // сталь
+            } else if (tileRow == 1 && tileCol == 0) {  // steel
                 isSolid = true;
                 isDestructible = false;
             }
@@ -147,7 +146,7 @@ public class MapLoader {
             tiles.add(tile);
         }
 
-        Gdx.app.log("MapLoader", "Всего тайлов загружено: " + tiles.size);
+        Gdx.app.log("MapLoader", "Total tiles loaded: " + tiles.size);
         for (MapTile tile : tiles) {
             if (tile.isBase) {
                 Gdx.app.log("BASE_CHECK", "Base tile at map (" + tile.x + "," + tile.y + "), damagedRegion=" +

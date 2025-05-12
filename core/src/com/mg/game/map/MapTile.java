@@ -10,7 +10,7 @@ public class MapTile {
     public final int x, y;
     public boolean isSolid;
     public boolean isDestructible;
-    public boolean isBase = false; // ← база (орёл)
+    public boolean isBase = false; // ← base (eagle)
     private int hitPoints = 2;
     private TextureRegion damagedTop, damagedBottom, damagedLeft, damagedRight;
 
@@ -29,7 +29,7 @@ public class MapTile {
         return new Rectangle(drawX, drawY, scaledSize, scaledSize);
     }
 
-    // старый общий сеттер, если он ещё нужен
+    // old general setter, if still needed
     public void setDamagedRegion(TextureRegion damaged) {
         this.damagedRegion = new TextureRegion(damaged);
     }
@@ -39,7 +39,7 @@ public class MapTile {
     public void setDamagedLeftRegion(TextureRegion r)   { this.damagedLeft = r; }
     public void setDamagedRightRegion(TextureRegion r)  { this.damagedRight = r; }
 
-    // —— Добавляем этот метод ——
+    // —— Add this method ——
     public void setBase(boolean isBase) {
         this.isBase = isBase;
     }
@@ -55,8 +55,8 @@ public class MapTile {
         }
 
         if (isBase) {
-            Gdx.app.log("GameScreen", "Орёл подбит!");
-            com.mg.game.gdxGame.setGameOverFlag(); // мы вызовем этот метод (ниже добавим)
+            Gdx.app.log("GameScreen", "Eagle was hit!");
+            com.mg.game.gdxGame.setGameOverFlag(); // we will call this method (added below)
         }
     }
 }

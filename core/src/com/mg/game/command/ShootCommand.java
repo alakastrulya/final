@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ShootCommand implements Command {
     private final Tank tank;
-    private final boolean useEnter; // true если использовать Enter, false если пробел
+    private final boolean useEnter; // true if Enter is used, false if space is used
     private final List<Bullet> bullets;
     private float shootCooldown = 0f;
 
