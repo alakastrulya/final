@@ -15,19 +15,18 @@ public class StandingByState implements TankState {
 
     @Override
     public void handleInput(int keycode, float stateTime) {
-        if (keycode == Input.Keys.UP) {
+        if (keycode == Input.Keys.UP || keycode == Input.Keys.W) {
             tank.setState(new MovingBackwardState(tank));
-        } else if (keycode == Input.Keys.DOWN) {
+        } else if (keycode == Input.Keys.DOWN || keycode == Input.Keys.S) {
             tank.setState(new MovingForwardState(tank));
-        } else if (keycode == Input.Keys.LEFT) {
+        } else if (keycode == Input.Keys.LEFT || keycode == Input.Keys.A) {
             tank.setState(new MovingLeftState(tank));
-        } else if (keycode == Input.Keys.RIGHT) {
+        } else if (keycode == Input.Keys.RIGHT || keycode == Input.Keys.D) {
             tank.setState(new MovingRightState(tank));
         } else if (keycode == Input.Keys.SPACE || keycode == Input.Keys.ENTER) {
             tank.shoot();
         }
     }
-
 
     @Override
     public TextureRegion getCurrentFrame(float stateTime) {
