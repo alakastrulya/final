@@ -8,6 +8,7 @@ import com.mg.game.bullet.Bullet;
 import com.mg.game.bullet.BulletFactory;
 import com.mg.game.assets.Assets;
 import com.mg.game.strategy.EnemyStrategy;
+import com.mg.game.tank.factory.Factory;
 import com.mg.game.tank.state.StandingByState;
 
 import java.util.Random;
@@ -145,11 +146,9 @@ public class Tank {
                 bulletY += 13;
                 break;
         }
-
-        BulletFactory bulletFactory = new BulletFactory(bulletX, bulletY, direction, colour, isEnemy);
-        return bulletFactory.create();
+        Gdx.app.log("ShootDebug", "Shooting bullet: color=" + colour + ", isEnemy=" + isEnemy);
+        return new Bullet(bulletX, bulletY, direction, colour, isEnemy);
     }
-
     public boolean isInLineOfSight(Tank player) {
         boolean sameRow = Math.abs(this.positionY - player.positionY) < 10;
         boolean sameColumn = Math.abs(this.positionX - player.positionX) < 10;

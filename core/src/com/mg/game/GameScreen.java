@@ -1,5 +1,8 @@
 package com.mg.game;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -15,6 +18,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.mg.game.assets.Assets;
 import com.mg.game.bullet.Bullet;
+import com.mg.game.bullet.BulletManager;
 import com.mg.game.command.*;
 import com.mg.game.explosion.Explosion;
 import com.mg.game.explosion.ExplosionFactory;
@@ -31,6 +35,7 @@ import com.mg.game.tank.Tank;
 import com.mg.game.tank.factory.EnemyTankFactory;
 import com.mg.game.tank.factory.PlayerTankFactory;
 import com.mg.game.utils.TextureUtils;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -100,6 +105,7 @@ public class GameScreen implements Screen, GameObserver {
 
     private int[] player1PointsBreakdown = new int[4]; // 4 типа танков
     private int[] player2PointsBreakdown = new int[4];
+    private BulletManager bulletManager;
 
 
     // Fixed enemy spawn points
@@ -127,7 +133,7 @@ public class GameScreen implements Screen, GameObserver {
 
         public EnemyMovementInfo() {
             direction = Tank.Direction.BACKWARD;
-            directionChangeTimer = (float)(Math.random() * 2.0f + 1.0f);
+            directionChangeTimer = (float) (Math.random() * 2.0f + 1.0f);
             movementDistance = 0;
             isStuck = false;
             stuckCounter = 0;
@@ -150,6 +156,13 @@ public class GameScreen implements Screen, GameObserver {
     public GameScreen(gdxGame game, int playerCount, int level) {
         this.playerCount = playerCount;
         this.game = game;
+        gdxGame.addObserver(new GameObserver() {
+            @Override
+            public void onBaseDestroyed() {
+                gameOver = true;
+                Gdx.app.log("Observer", "База уничтожена. Устанавливаем gameOver = true");
+            }
+        });
         this.currentLevel = level;
         camera = new OrthographicCamera();
         camera.setToOrtho(true, 640, 480);
@@ -188,6 +201,7 @@ public class GameScreen implements Screen, GameObserver {
             Gdx.app.error("GameScreen", "Error loading explosion sound: " + e.getMessage());
             explosionSound = null;
         }
+        bulletManager = new BulletManager(bullets, explosions, this, explosionSound);
 
         try {
             hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.mp3"));
@@ -196,12 +210,14 @@ public class GameScreen implements Screen, GameObserver {
             hitSound = null;
         }
 
+
         // Initialize first tank
-        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow",1, this);
+        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1, this);
         player1 = player1Factory.create();
         player1.positionX = 152;
         player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
+
 
         // Initialize second tank if two-player mode is selected
         if (playerCount == 2) {
@@ -251,7 +267,7 @@ public class GameScreen implements Screen, GameObserver {
             EnemyMovementInfo movementInfo = new EnemyMovementInfo();
             // Choose a random initial direction
             Tank.Direction[] directions = Tank.Direction.values();
-            movementInfo.direction = directions[(int)(Math.random() * directions.length)];
+            movementInfo.direction = directions[(int) (Math.random() * directions.length)];
             enemy.setDirection(movementInfo.direction);
             enemyMovementInfos.add(movementInfo);
 
@@ -310,7 +326,7 @@ public class GameScreen implements Screen, GameObserver {
                 for (int i = 0; i < 4; i++) {
                     tankCounts[i] = (player1PointsBreakdown[i] + player2PointsBreakdown[i]) / 100;
                 }
-
+                Gdx.app.log("ScoreDebug", "player1Score = " + player1Score);
                 game.setScreen(
                         new LevelCompleteScreen(
                                 game,
@@ -386,7 +402,7 @@ public class GameScreen implements Screen, GameObserver {
             checkEnemyRespawn(delta);
 
             // Update bullets and check for hits
-            updateBullets(delta);
+            bulletManager.update(delta);
 
             // Update explosions
             updateExplosions(delta);
@@ -442,7 +458,7 @@ public class GameScreen implements Screen, GameObserver {
             TextureRegion frame1 = player1.getCurrentFrame();
             if (frame1 != null) {
                 // If the tank is invulnerable, draw it blinking
-                if (!player1.isInvulnerable() || (int)(stateTime * 10) % 2 == 0) {
+                if (!player1.isInvulnerable() || (int) (stateTime * 10) % 2 == 0) {
                     batch.draw(frame1, player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
                 }
             }
@@ -452,7 +468,7 @@ public class GameScreen implements Screen, GameObserver {
             TextureRegion frame2 = player2.getCurrentFrame();
             if (frame2 != null) {
                 // If the tank is invulnerable, draw it blinking
-                if (!player2.isInvulnerable() || (int)(stateTime * 10) % 2 == 0) {
+                if (!player2.isInvulnerable() || (int) (stateTime * 10) % 2 == 0) {
                     batch.draw(frame2, player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
                 }
             }
@@ -852,7 +868,7 @@ public class GameScreen implements Screen, GameObserver {
                 chooseNewDirectionForEnemy(enemy, info, i);
 
                 // Reset counters
-                info.directionChangeTimer = (float)(
+                info.directionChangeTimer = (float) (
                         Math.random() * (MAX_DIRECTION_CHANGE_TIME - MIN_DIRECTION_CHANGE_TIME) + MIN_DIRECTION_CHANGE_TIME
                 );
                 info.movementDistance = 0;
@@ -871,7 +887,7 @@ public class GameScreen implements Screen, GameObserver {
                 // If stuck too many times, change direction immediately
                 if (info.stuckCounter >= STUCK_THRESHOLD) {
                     chooseNewDirectionForEnemy(enemy, info, i);
-                    info.directionChangeTimer = (float)(
+                    info.directionChangeTimer = (float) (
                             Math.random() * (MAX_DIRECTION_CHANGE_TIME - MIN_DIRECTION_CHANGE_TIME) + MIN_DIRECTION_CHANGE_TIME
                     );
                     info.movementDistance = 0;
@@ -940,7 +956,7 @@ public class GameScreen implements Screen, GameObserver {
                     Tank.Direction[] otherDirections = {
                             Tank.Direction.LEFT, Tank.Direction.FORWARD, Tank.Direction.BACKWARD
                     };
-                    info.direction = otherDirections[(int)(Math.random() * otherDirections.length)];
+                    info.direction = otherDirections[(int) (Math.random() * otherDirections.length)];
                 }
             } else {
                 if (Math.random() < 0.8) {
@@ -951,7 +967,7 @@ public class GameScreen implements Screen, GameObserver {
                     Tank.Direction[] otherDirections = {
                             Tank.Direction.RIGHT, Tank.Direction.FORWARD, Tank.Direction.BACKWARD
                     };
-                    info.direction = otherDirections[(int)(Math.random() * otherDirections.length)];
+                    info.direction = otherDirections[(int) (Math.random() * otherDirections.length)];
                 }
             }
         } else {
@@ -965,7 +981,7 @@ public class GameScreen implements Screen, GameObserver {
                     Tank.Direction[] otherDirections = {
                             Tank.Direction.FORWARD, Tank.Direction.LEFT, Tank.Direction.RIGHT
                     };
-                    info.direction = otherDirections[(int)(Math.random() * otherDirections.length)];
+                    info.direction = otherDirections[(int) (Math.random() * otherDirections.length)];
                 }
             } else {
                 if (Math.random() < 0.8) {
@@ -976,7 +992,7 @@ public class GameScreen implements Screen, GameObserver {
                     Tank.Direction[] otherDirections = {
                             Tank.Direction.BACKWARD, Tank.Direction.LEFT, Tank.Direction.RIGHT
                     };
-                    info.direction = otherDirections[(int)(Math.random() * otherDirections.length)];
+                    info.direction = otherDirections[(int) (Math.random() * otherDirections.length)];
                 }
             }
         }
@@ -1059,7 +1075,7 @@ public class GameScreen implements Screen, GameObserver {
 
     // Updated method for spawning a new enemy using fixed spawn points
     private void spawnNewEnemy() {
-        int spawnPointIndex = (int)(Math.random() * SPAWN_POINTS.length);
+        int spawnPointIndex = (int) (Math.random() * SPAWN_POINTS.length);
         int spawnX = SPAWN_POINTS[spawnPointIndex][0];
         int spawnY = SPAWN_POINTS[spawnPointIndex][1];
 
@@ -1082,7 +1098,7 @@ public class GameScreen implements Screen, GameObserver {
 
         EnemyMovementInfo movementInfo = new EnemyMovementInfo();
         Tank.Direction[] directions = Tank.Direction.values();
-        movementInfo.direction = directions[(int)(Math.random() * directions.length)];
+        movementInfo.direction = directions[(int) (Math.random() * directions.length)];
         enemy.setDirection(movementInfo.direction);
         enemyMovementInfos.add(movementInfo);
 
@@ -1162,7 +1178,7 @@ public class GameScreen implements Screen, GameObserver {
     }
 
     private EnemyStrategy getRandomStrategy() {
-        int r = (int)(Math.random() * 3); // 0, 1, or 2
+        int r = (int) (Math.random() * 3); // 0, 1, or 2
         switch (r) {
             case 0:
                 return new BaseAttackStrategy();
@@ -1174,148 +1190,6 @@ public class GameScreen implements Screen, GameObserver {
                 return new BaseAttackStrategy(); // Fallback
         }
     }
-
-    private void updateBullets(float delta) {
-        Iterator<Bullet> iterator = bullets.iterator();
-        while (iterator.hasNext()) {
-            Bullet bullet = iterator.next();
-            if (bullet == null) {
-                iterator.remove();
-                continue;
-            }
-
-            bullet.update(delta);
-
-            // Check for bullet-to-bullet collisions
-            for (Bullet other : bullets) {
-                if (other != bullet && other.isActive() && bullet.isActive()) {
-                    if (bullet.getBounds().overlaps(other.getBounds())) {
-                        ExplosionFactory explosionFactory1 = new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY());
-                        Explosion explosion = explosionFactory1.create();
-                        explosions.add(explosion);
-                        if (explosionSound != null) explosionSound.play();
-                        bullet.deactivate();
-                        other.deactivate();
-                        break;
-                    }
-                }
-            }
-
-            // Check for out-of-bounds
-            boolean outOfBounds = false;
-            float explosionX = bullet.getPositionX();
-            float explosionY = bullet.getPositionY();
-
-            if (bullet.getPositionX() >= 480) {
-                outOfBounds = true;
-                explosionX = 465;
-            } else if (bullet.getPositionX() < 0) {
-                outOfBounds = true;
-                explosionX = 15;
-            } else if (bullet.getPositionY() >= 480) {
-                outOfBounds = true;
-                explosionY = 465;
-            } else if (bullet.getPositionY() < 0) {
-                outOfBounds = true;
-                explosionY = 15;
-            }
-
-            if (outOfBounds) {
-                ExplosionFactory explosionFactory2 = new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY());
-                Explosion explosion2 = explosionFactory2.create();
-                explosions.add(explosion2);
-                if (explosionSound != null) explosionSound.play();
-                Gdx.app.log("Bullet", "Bullet went out of bounds, explosion created at " + explosionX + ", " + explosionY);
-                bullet.deactivate();
-                bullet.dispose();
-                iterator.remove();
-                continue;
-            }
-
-            // Check collisions with map objects and tanks
-            checkBulletCollisions(bullet);
-
-            if (!bullet.isActive()) {
-                bullet.dispose();
-                iterator.remove();
-            }
-        }
-    }
-
-    private void checkBulletCollisions(Bullet bullet) {
-        if (bullet == null || !bullet.isActive()) return;
-
-        Rectangle bulletBounds = bullet.getBounds();
-
-        // 1. Collision with map tiles
-        for (MapTile tile : mapLoader.tiles) {
-            if (!tile.isSolid) continue;
-
-            Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
-            if (bulletBounds.overlaps(tileRect)) {
-                if (tile.isDestructible) {
-                    tile.takeHit();
-
-                    if (tile.isBase) {
-                        gameOver = true;
-                        Gdx.app.log("GameScreen", "Base destroyed! Game over.");
-                    }
-
-                    // Damage one neighbor
-                    int tx = tile.x;
-                    int ty = tile.y;
-                    for (MapTile neighbor : mapLoader.tiles) {
-                        if (!neighbor.isDestructible || !neighbor.isSolid) continue;
-
-                        boolean isNeighbor =
-                                (neighbor.x == tx && Math.abs(neighbor.y - ty) == 1) ||
-                                        (neighbor.y == ty && Math.abs(neighbor.x - tx) == 1);
-
-                        if (isNeighbor && !neighbor.isBase) {
-                            neighbor.takeHit();
-                            break;
-                        }
-                    }
-                }
-
-                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
-                if (explosionSound != null) explosionSound.play();
-
-                bullet.deactivate();
-                return;
-            }
-        }
-
-        // 2. Collision with enemies
-        for (Tank enemy : enemies) {
-            if (!enemy.isAlive()) continue;
-
-            if (bulletBounds.overlaps(enemy.getBounds())) {
-                bullet.deactivate();
-
-                boolean wasKilled = enemy.takeDamage();
-                if (wasKilled) {
-                    onEnemyKilled(); // ✅ увеличение общего счёта
-                    explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
-                    if (explosionSound != null) explosionSound.play();
-                }
-
-                //  Кто выстрелил — добавим очки и статистику
-                if (!bullet.isFromEnemy()) {
-                    if ("yellow".equals(bullet.getColor())) {
-                        player1Score += 100;
-                        player1PointsBreakdown[0] += 1;
-                    } else if ("green".equals(bullet.getColor())) {
-                        player2Score += 100;
-                        player2PointsBreakdown[0] += 1;
-                    }
-                }
-
-                return;
-            }
-        }
-    }
-
     private void updateExplosions(float delta) {
         Iterator<Explosion> iterator = explosions.iterator();
         while (iterator.hasNext()) {
@@ -1404,7 +1278,7 @@ public class GameScreen implements Screen, GameObserver {
                 // 1. Check map
                 for (MapTile tile : mapLoader.tiles) {
                     if (tile.isSolid) {
-                        Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE,  TILE_SCALE, -17, -17);
+                        Rectangle tileRect = tile.getBounds(MapLoader.TILE_SIZE, TILE_SCALE, -17, -17);
                         if (rect.overlaps(tileRect)) {
                             blocked = true;
                             break;
@@ -1455,8 +1329,8 @@ public class GameScreen implements Screen, GameObserver {
         float oldX = tank.positionX;
         float oldY = tank.positionY;
 
-        tank.positionX = (int)newX;
-        tank.positionY = (int)newY;
+        tank.positionX = (int) newX;
+        tank.positionY = (int) newY;
 
         boolean collides = false;
         for (Tank otherEnemy : enemies) {
@@ -1466,8 +1340,8 @@ public class GameScreen implements Screen, GameObserver {
             }
         }
 
-        tank.positionX = (int)oldX;
-        tank.positionY = (int)oldY;
+        tank.positionX = (int) oldX;
+        tank.positionY = (int) oldY;
 
         return collides;
     }
@@ -1542,4 +1416,42 @@ public class GameScreen implements Screen, GameObserver {
         if (levelIntro != null) levelIntro.dispose();
         game.removeObserver(this);
     }
+
+    public com.badlogic.gdx.utils.Array<MapTile> getMapTiles() {
+        return mapLoader.tiles;
+    }
+
+
+    public int getTileSize() {
+        return MapLoader.TILE_SIZE;
+    }
+
+    public float getTileScale() {
+        return TILE_SCALE;
+    }
+
+    public int getOffsetX() {
+        return -17;
+    }
+
+    public int getOffsetY() {
+        return -17;
+    }
+
+    public ArrayList<Tank> getEnemies() {
+        return enemies;
+    }
+    public void addPlayer1Score(int points) {
+        player1Score += points;
+        player1PointsBreakdown[0] += 1;
+        Gdx.app.log("ScoreDebug", "P1 Score: " + player1Score);
+    }
+
+    public void addPlayer2Score(int points) {
+        player2Score += points;
+        player2PointsBreakdown[0] += 1;
+        Gdx.app.log("ScoreDebug", "P2 Score: " + player2Score);
+    }
+
+
 }

@@ -41,6 +41,8 @@ public class ShootCommand implements Command {
             bullets.add(bullet);
             shootCooldown = SHOOT_COOLDOWN_TIME;
             Gdx.app.log("ShootCommand", "Shot a bullet for tank at " + tank.positionX + ", " + tank.positionY);
+            Gdx.app.log("ShootCommand", "Shot bullet | color=" + bullet.getColor() + ", fromEnemy=" + bullet.isFromEnemy());
         }
     }
+
 }
