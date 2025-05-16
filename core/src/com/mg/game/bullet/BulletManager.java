@@ -63,17 +63,16 @@ public class BulletManager {
             }
         }
 
-        // Collision with enemies
-        for (Tank enemy : screen.getEnemies()) {
-            if (enemy != null && enemy.isAlive() && bullet.getBounds().overlaps(enemy.getBounds())) {
-                boolean wasKilled = enemy.takeDamage();
-                if (wasKilled) {
-                    screen.onEnemyKilled();
-                    explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
-                    if (explosionSound != null) explosionSound.play();
-
-                    // Add score to the player
-                    if (!bullet.isFromEnemy()) {
+        // Collision with enemies (for player bullets)
+        if (!bullet.isFromEnemy()) {
+            for (Tank enemy : screen.getEnemies()) {
+                if (enemy != null && enemy.isAlive() && bullet.getBounds().overlaps(enemy.getBounds())) {
+                    boolean wasKilled = enemy.takeDamage();
+                    if (wasKilled) {
+                        screen.onEnemyKilled();
+                        explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
+                        if (explosionSound != null) explosionSound.play();
+                        // Add score to the player
                         String color = bullet.getColor();
                         if ("yellow".equalsIgnoreCase(color)) {
                             screen.addPlayer1Score(100);
@@ -82,9 +81,38 @@ public class BulletManager {
                         }
                         Gdx.app.log("ScoreDebug", "Bullet hit by " + color + ", +100 points");
                     }
+                    return true;
                 }
+            }
+        }
+
+        // Collision with players (for enemy bullets)
+        if (bullet.isFromEnemy()) {
+            Tank player1 = screen.getPlayer1();
+            if (player1 != null && player1.isAlive() && bullet.getBounds().overlaps(player1.getBounds())) {
+                boolean wasKilled = player1.takeDamage();
+                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
+                if (explosionSound != null) explosionSound.play();
+                Gdx.app.log("BulletManager", "Enemy bullet hit Player 1, health=" + player1.getHealth());
                 return true;
             }
+            Tank player2 = screen.getPlayer2();
+            if (player2 != null && player2.isAlive() && bullet.getBounds().overlaps(player2.getBounds())) {
+                boolean wasKilled = player2.takeDamage();
+                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
+                if (explosionSound != null) explosionSound.play();
+                Gdx.app.log("BulletManager", "Enemy bullet hit Player 2, health=" + player2.getHealth());
+                return true;
+            }
+        }
+
+        // Collision with base (for both player and enemy bullets)
+        MapTile baseTile = screen.getBaseTile();
+        if (baseTile != null && bullet.getBounds().overlaps(baseTile.getBounds(screen.getTileSize(), screen.getTileScale(), screen.getOffsetX(), screen.getOffsetY()))) {
+            screen.onBaseDestroyed();
+            explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
+            if (explosionSound != null) explosionSound.play();
+            return true;
         }
 
         return false;
