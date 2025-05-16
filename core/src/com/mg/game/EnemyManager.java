@@ -32,6 +32,7 @@ public class EnemyManager {
     private static final float MAX_DIRECTION_CHANGE_TIME = 3.0f;
     private static final int STUCK_THRESHOLD = 10;
     private static final int MIN_MOVEMENT_BEFORE_CHANGE = 20;
+    private CollisionManager collisionManager;
 
     // Structure for enemy movement information
     public static class EnemyMovementInfo {
@@ -40,7 +41,7 @@ public class EnemyManager {
         public int movementDistance;
         public boolean isStuck;
         public int stuckCounter;
-
+        private CollisionManager collisionManager;
         public EnemyMovementInfo() {
             direction = Tank.Direction.BACKWARD;
             directionChangeTimer = (float) (Math.random() * 2.0f + 1.0f);
@@ -59,6 +60,7 @@ public class EnemyManager {
         this.enemyRespawnTimer = 0f;
         this.enemyMoveTimer = 0f;
         this.random = new Random();
+        this.collisionManager = gameScreen.getCollisionManager();
 
         initializeEnemies();
     }
@@ -73,11 +75,11 @@ public class EnemyManager {
             int spawnX = spawnPoints[spawnPointIndex][0];
             int spawnY = spawnPoints[spawnPointIndex][1];
 
-            if (gameScreen.isSpawnPointClear(spawnX, spawnY)) {
+            if (collisionManager.isSpawnPointClear(spawnX, spawnY)) {
                 enemy.positionX = spawnX;
                 enemy.positionY = spawnY;
             } else {
-                int[] freeSpawn = gameScreen.findNearestFreeSpot(spawnX, spawnY);
+                int[] freeSpawn = collisionManager.findNearestFreeSpot(spawnX, spawnY);
                 enemy.positionX = freeSpawn[0];
                 enemy.positionY = freeSpawn[1];
             }
@@ -224,9 +226,9 @@ private boolean moveEnemyInDirection(Tank enemy, EnemyMovementInfo info) {
     }
 
     boolean canMove = newX >= 0 && newX <= 454 - 9 && newY >= 0 && newY <= 454 &&
-            !gameScreen.checkCollisionWithPlayer(enemy, newX, newY) &&
-            !gameScreen.checkCollisionWithEnemy(enemy, newX, newY) &&
-            !gameScreen.checkCollisionWithMap(newX, newY, enemy);
+            !collisionManager.checkCollisionWithPlayer(enemy, newX, newY) &&
+            !collisionManager.checkCollisionWithEnemy(enemy, newX, newY) &&
+            !collisionManager.checkCollisionWithMap(newX, newY, enemy);
 
     if (canMove) {
         enemy.positionX = newX;
@@ -247,18 +249,19 @@ private boolean moveEnemyInDirection(Tank enemy, EnemyMovementInfo info) {
     }
 }
 
-private void checkEnemyRespawn(float delta) {
-    int aliveEnemies = countAliveEnemies();
-    if (aliveEnemies < MAX_ENEMIES_ON_MAP && remainingEnemies > 0) {
-        enemyRespawnTimer += delta;
-        if (enemyRespawnTimer >= ENEMY_RESPAWN_DELAY) {
-            spawnNewEnemy();
-            enemyRespawnTimer = 0f;
-            remainingEnemies--;
-            Gdx.app.log("EnemyManager", "Spawned new enemy. Remaining: " + remainingEnemies);
+    private void checkEnemyRespawn(float delta) {
+        int aliveEnemies = countAliveEnemies();
+        Gdx.app.log("EnemyManager", "Alive enemies: " + aliveEnemies + ", Remaining: " + remainingEnemies);
+        if (aliveEnemies < MAX_ENEMIES_ON_MAP && remainingEnemies > 0) {
+            enemyRespawnTimer += delta;
+            if (enemyRespawnTimer >= ENEMY_RESPAWN_DELAY) {
+                spawnNewEnemy();
+                enemyRespawnTimer = 0f;
+                remainingEnemies--;
+                Gdx.app.log("EnemyManager", "Spawned new enemy. Remaining: " + remainingEnemies);
+            }
         }
     }
-}
 
 private void spawnNewEnemy() {
     int spawnPointIndex = random.nextInt(spawnPoints.length);
@@ -269,11 +272,11 @@ private void spawnNewEnemy() {
     Tank enemy = enemyFactory.create();
     enemy.setStrategy(getRandomStrategy());
 
-    if (gameScreen.isSpawnPointClear(spawnX, spawnY)) {
+    if (collisionManager.isSpawnPointClear(spawnX, spawnY)) {
         enemy.positionX = spawnX;
         enemy.positionY = spawnY;
     } else {
-        int[] freeSpawn = gameScreen.findNearestFreeSpot(spawnX, spawnY);
+        int[] freeSpawn = collisionManager.findNearestFreeSpot(spawnX, spawnY);
         enemy.positionX = freeSpawn[0];
         enemy.positionY = freeSpawn[1];
     }

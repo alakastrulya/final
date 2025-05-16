@@ -3,6 +3,7 @@ package com.mg.game.tank;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.mg.game.CollisionManager;
 import com.mg.game.GameScreen;
 import com.mg.game.bullet.Bullet;
 import com.mg.game.bullet.BulletFactory;
@@ -38,6 +39,7 @@ public class Tank {
 
     private TankState currentState;
     private EnemyStrategy strategy;
+    private CollisionManager collisionManager;
 
     private GameScreen screen; // New field
 
@@ -71,22 +73,49 @@ public class Tank {
             this.currentState = null;
         }
     }
+    public Tank(String colour, int level, boolean isEnemy, GameScreen screen, CollisionManager collisionManager) {
+        this.colour = colour;
+        this.level = level;
+        this.isEnemy = isEnemy;
+        this.screen = screen;
+        this.collisionManager = collisionManager;
+        this.direction = Direction.FORWARD;
+        this.isMoving = false;
+        this.random = new Random();
+        this.shootTimer = 0;
+
+        this.health = isEnemy ? 1 : 3;
+        this.invulnerabilityTimer = 0;
+
+        if (isEnemy) {
+            chooseRandomDirection();
+        }
+
+        try {
+            this.currentState = new StandingByState(this);
+        } catch (Exception e) {
+            Gdx.app.error("Tank", "Failed to initialize StandingByState: " + e.getMessage());
+            this.currentState = null;
+        }
+    }
 
     public void handleInput(int keycode, float stateTime) {
         this.stateTime = stateTime;
-        if (currentState != null) {
-            try {
-                currentState.handleInput(keycode, stateTime);
-            } catch (Exception e) {
-                Gdx.app.error("Tank", "Error handling input: " + e.getMessage());
-            }
+        if (currentState == null) {
+            Gdx.app.error("Tank", "currentState is null for tank: " + colour);
+            return;
+        }
+        try {
+            currentState.handleInput(keycode, stateTime);
+        } catch (Exception e) {
+            Gdx.app.error("Tank", "Error handling input: " + e.getMessage());
         }
         currentFrame = getCurrentFrame();
     }
 
     public void moveUp() {
         int newY = positionY - 1;
-        if (screen != null && GameScreen.canMoveTo(this, positionX, newY, screen)) {
+        if (screen != null && collisionManager.canMoveTo(this, positionX, newY)) {
             positionY = newY;
             Gdx.app.log("Tank", colour + " moved up to y=" + positionY);
         } else {
@@ -96,7 +125,7 @@ public class Tank {
 
     public void moveDown() {
         int newY = positionY + 1;
-        if (screen != null && GameScreen.canMoveTo(this, positionX, newY, screen)) {
+        if (screen != null && collisionManager.canMoveTo(this, positionX, newY)) {
             positionY = newY;
             Gdx.app.log("Tank", colour + " moved down to y=" + positionY);
         } else {
@@ -106,7 +135,7 @@ public class Tank {
 
     public void moveLeft() {
         int newX = positionX - 1;
-        if (screen != null && GameScreen.canMoveTo(this, newX, positionY, screen)) {
+        if (screen != null && collisionManager.canMoveTo(this, newX, positionY)) {
             positionX = newX;
             Gdx.app.log("Tank", colour + " moved left to x=" + positionX);
         } else {
@@ -116,7 +145,7 @@ public class Tank {
 
     public void moveRight() {
         int newX = positionX + 1;
-        if (screen != null && GameScreen.canMoveTo(this, newX, positionY, screen)) {
+        if (screen != null && collisionManager.canMoveTo(this, newX, positionY)) {
             positionX = newX;
             Gdx.app.log("Tank", colour + " moved right to x=" + positionX);
         } else {
