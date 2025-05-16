@@ -40,11 +40,9 @@ public class gdxGame extends Game {
 			observers.add(observer);
 		}
 	}
-
 	public static void removeObserver(GameObserver observer) {
 		observers.remove(observer);
 	}
-
 	public static void notifyBaseDestroyed() {
 		for (GameObserver o : observers) {
 			o.onBaseDestroyed();

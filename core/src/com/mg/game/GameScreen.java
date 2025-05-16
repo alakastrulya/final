@@ -2,6 +2,7 @@ package com.mg.game;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -36,19 +37,16 @@ import com.mg.game.tank.factory.EnemyTankFactory;
 import com.mg.game.tank.factory.PlayerTankFactory;
 import com.mg.game.utils.TextureUtils;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 public class GameScreen implements Screen, GameObserver {
     private int playerCount;
     private gdxGame game;
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private SpriteBatch textBatch; // Separate SpriteBatch for text
-    public float stateTime;
+    private float stateTime;
     private Tank player1;
     private Tank player2;
-    public ArrayList<Bullet> bullets;
+    private ArrayList<Bullet> bullets;
     private ArrayList<Tank> enemies;
     private ArrayList<Explosion> explosions; // Added for explosion animation
     private LevelIntroAnimation levelIntro;
@@ -107,21 +105,12 @@ public class GameScreen implements Screen, GameObserver {
     private int[] player2PointsBreakdown = new int[4];
     private BulletManager bulletManager;
 
-
     // Fixed enemy spawn points
     private final int[][] SPAWN_POINTS = {
             {80, 40},   // Top-left corner
             {240, 40},  // Top-center
             {400, 40}   // Top-right corner
     };
-
-    public int getPlayerCount() {
-        return playerCount;
-    }
-
-    public float getStateTime() {
-        return stateTime;
-    }
 
     // Structure for storing enemy movement information
     private class EnemyMovementInfo {
@@ -149,6 +138,7 @@ public class GameScreen implements Screen, GameObserver {
     private static final int STUCK_THRESHOLD = 10; // Number of movement attempts before considering the tank stuck
     private static final int MIN_MOVEMENT_BEFORE_CHANGE = 20; // Minimum distance before changing direction
 
+    // Конструкторы и публичные геттеры для доступа из GameRenderer
     public GameScreen(gdxGame game, int playerCount) {
         this(game, playerCount, 1); // Start with level 1 by default
     }
@@ -210,14 +200,12 @@ public class GameScreen implements Screen, GameObserver {
             hitSound = null;
         }
 
-
         // Initialize first tank
         PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1, this);
         player1 = player1Factory.create();
         player1.positionX = 152;
         player1.positionY = 450;
         Gdx.app.log("GameScreen", "Player 1 color: " + player1.getColour());
-
 
         // Initialize second tank if two-player mode is selected
         if (playerCount == 2) {
@@ -289,6 +277,79 @@ public class GameScreen implements Screen, GameObserver {
         );
     }
 
+    // Публичные геттеры для GameRenderer
+    public int getPlayerCount() {
+        return playerCount;
+    }
+
+    public float getStateTime() {
+        return stateTime;
+    }
+
+    public Tank getPlayer1() {
+        return player1;
+    }
+
+    public Tank getPlayer2() {
+        return player2;
+    }
+
+    public ArrayList<Bullet> getBullets() {
+        return bullets;
+    }
+
+    public ArrayList<Tank> getEnemies() {
+        return enemies;
+    }
+
+    public ArrayList<Explosion> getExplosions() {
+        return explosions;
+    }
+
+    public boolean isLevelIntroPlaying() {
+        return isLevelIntroPlaying;
+    }
+
+    public LevelIntroAnimation getLevelIntro() {
+        return levelIntro;
+    }
+
+    public int getTotalKilledEnemies() {
+        return totalKilledEnemies;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    public static float getTileScale() {
+        return TILE_SCALE;
+    }
+
+    public static float getBaseTileShift() {
+        return BASE_TILE_SHIFT;
+    }
+
+    public com.badlogic.gdx.utils.Array<MapTile> getMapTiles() {
+        return mapLoader.tiles;
+    }
+
+    public void addPlayer1Score(int points) {
+        player1Score += points;
+        player1PointsBreakdown[0] += 1;
+        Gdx.app.log("ScoreDebug", "P1 Score: " + player1Score);
+    }
+
+    public void addPlayer2Score(int points) {
+        player2Score += points;
+        player2PointsBreakdown[0] += 1;
+        Gdx.app.log("ScoreDebug", "P2 Score: " + player2Score);
+    }
+
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(192f / 255, 192f / 255, 192f / 255, 1);
@@ -344,7 +405,6 @@ public class GameScreen implements Screen, GameObserver {
                 return;
             }
         }
-
 
         // If the level intro animation is playing
         if (isLevelIntroPlaying) {
@@ -691,6 +751,7 @@ public class GameScreen implements Screen, GameObserver {
         return Gdx.input.isKeyPressed(keycode);
     }
 
+    // Обновлённый метод canMoveTo с учётом масштабирования
     public static boolean canMoveTo(Tank tank, int newX, int newY, GameScreen screen) {
         if (tank == null || !tank.isAlive()) {
             Gdx.app.log("canMoveTo", "Cannot move: tank is null or dead");
@@ -1190,6 +1251,7 @@ public class GameScreen implements Screen, GameObserver {
                 return new BaseAttackStrategy(); // Fallback
         }
     }
+
     private void updateExplosions(float delta) {
         Iterator<Explosion> iterator = explosions.iterator();
         while (iterator.hasNext()) {
@@ -1416,20 +1478,6 @@ public class GameScreen implements Screen, GameObserver {
         if (levelIntro != null) levelIntro.dispose();
         game.removeObserver(this);
     }
-
-    public com.badlogic.gdx.utils.Array<MapTile> getMapTiles() {
-        return mapLoader.tiles;
-    }
-
-
-    public int getTileSize() {
-        return MapLoader.TILE_SIZE;
-    }
-
-    public float getTileScale() {
-        return TILE_SCALE;
-    }
-
     public int getOffsetX() {
         return -17;
     }
@@ -1437,21 +1485,7 @@ public class GameScreen implements Screen, GameObserver {
     public int getOffsetY() {
         return -17;
     }
-
-    public ArrayList<Tank> getEnemies() {
-        return enemies;
+    public int getTileSize() {
+        return MapLoader.TILE_SIZE;
     }
-    public void addPlayer1Score(int points) {
-        player1Score += points;
-        player1PointsBreakdown[0] += 1;
-        Gdx.app.log("ScoreDebug", "P1 Score: " + player1Score);
-    }
-
-    public void addPlayer2Score(int points) {
-        player2Score += points;
-        player2PointsBreakdown[0] += 1;
-        Gdx.app.log("ScoreDebug", "P2 Score: " + player2Score);
-    }
-
-
 }

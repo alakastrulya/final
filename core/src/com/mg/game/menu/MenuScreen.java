@@ -70,11 +70,11 @@ public class MenuScreen implements Screen {
             }
         } else if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
             if (selectorPosition == 305) {
-                game.setScreen(new GameScreen(game, 1));
+                game.setScreen(new GameScreen(game, 1, 1)); // Добавлен currentLevel = 1
             } else if (selectorPosition == 342) {
                 // Ensure assets are loaded before starting 2-player mode
                 Assets.loadScoreScreenTextures();
-                game.setScreen(new GameScreen(game, 2));
+                game.setScreen(new GameScreen(game, 2, 1)); // Добавлен currentLevel = 1
             }
         }
     }
