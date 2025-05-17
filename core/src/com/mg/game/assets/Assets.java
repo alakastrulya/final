@@ -208,6 +208,7 @@ public class Assets {
         }
     }
 
+
     public static void loadSounds() {
         try {
             levelBeginSound = Gdx.audio.newSound(Gdx.files.internal("sounds/startLevel.mp3"));

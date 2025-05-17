@@ -1,3 +1,4 @@
+
 package com.mg.game.level;
 
 import com.badlogic.gdx.Gdx;
@@ -94,7 +95,7 @@ public class LevelIntroAnimation {
         this.isFinished = false;
 
         // Creating a font for the text "STAGE X" (backup version)
-        font = new BitmapFont(Gdx.files.internal("fonts/pixel.fnt"));
+        font = new BitmapFont(Gdx.files.internal("fonts/pixel.fnt"),true);
         font.getData().setScale(5.0f); // Large font size
         font.setColor(Color.WHITE);
 
@@ -249,7 +250,7 @@ public class LevelIntroAnimation {
             float textX = (Gdx.graphics.getWidth() - layout.width) / 2f;
 
             // The center between the blinds
-            float textY = Gdx.graphics.getHeight() / 2f + layout.height / 2f;
+            float textY = Gdx.graphics.getHeight() / 2f - layout.height / 1.5f;
 
             font.draw(batch, layout, textX, textY);
         }

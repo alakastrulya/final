@@ -1,11 +1,6 @@
 package com.mg.game;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
@@ -20,99 +15,67 @@ import com.badlogic.gdx.math.Rectangle;
 import com.mg.game.assets.Assets;
 import com.mg.game.bullet.Bullet;
 import com.mg.game.bullet.BulletManager;
-import com.mg.game.command.*;
 import com.mg.game.explosion.Explosion;
-import com.mg.game.explosion.ExplosionFactory;
 import com.mg.game.level.LevelCompleteScreen;
 import com.mg.game.level.LevelIntroAnimation;
 import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
 import com.mg.game.observer.GameObserver;
-import com.mg.game.strategy.AggressiveChaseStrategy;
-import com.mg.game.strategy.BaseAttackStrategy;
-import com.mg.game.strategy.EnemyStrategy;
-import com.mg.game.strategy.WanderStrategy;
 import com.mg.game.tank.Tank;
-import com.mg.game.tank.factory.EnemyTankFactory;
 import com.mg.game.tank.factory.PlayerTankFactory;
 import com.mg.game.utils.TextureUtils;
+
+import java.util.ArrayList;
+import java.util.Iterator;
 
 public class GameScreen implements Screen, GameObserver {
     private int playerCount;
     private gdxGame game;
     private OrthographicCamera camera;
     private SpriteBatch batch;
-    private SpriteBatch textBatch; // Separate SpriteBatch for text
+    private SpriteBatch textBatch;
     private float stateTime;
     private Tank player1;
     private Tank player2;
     private ArrayList<Bullet> bullets;
     private ArrayList<Tank> enemies;
-    private ArrayList<Explosion> explosions; // Added for explosion animation
+    private ArrayList<Explosion> explosions;
     private LevelIntroAnimation levelIntro;
     private EnemyManager enemyManager;
     private boolean isLevelIntroPlaying = true;
     private int totalKilledEnemies;
-    private InputHandler inputHandler;
-
-    // Variables for controlling movement speed
-    private float moveTimer = 0f;
-    private static final float MOVE_DELAY = 0.003f;
-
-
-    // Variables for tracking game state
+    private InputManager inputManager;
     private int score = 0;
     private boolean gameOver = false;
     private BitmapFont font;
     private BitmapFont largeFont;
     private Sound explosionSound;
     private Sound hitSound;
-
-    // Variable for tracking pause state
     private boolean isPaused = false;
-
-    // Variables for the map
     private MapLoader mapLoader;
     private static final float TILE_SCALE = 0.87f;
     private static final float BASE_TILE_SHIFT = MapLoader.TILE_SIZE / TILE_SCALE;
-
-    // Variables for tracking level completion
     private boolean levelComplete = false;
     private float levelCompleteTimer = 0f;
     private CollisionManager collisionManager;
-    private static final float LEVEL_COMPLETE_DELAY = 2.0f; // Delay before showing score screen
-
-    // Current level
+    private static final float LEVEL_COMPLETE_DELAY = 2.0f;
     private int currentLevel;
-
-    // Add these fields to the GameScreen class
-    private int baseX = 320; // X coordinate of the base (adjust as needed)
-    private int baseY = 440; // Y coordinate of the base (adjust as needed)
-
-    // Add debug information
+    private int baseX = 320;
+    private int baseY = 440;
     private boolean debugMode = false;
-
     private int player1Score = 0;
     private int player2Score = 0;
-
-    private int[] player1PointsBreakdown = new int[4]; // 4 types of tanks
+    private int[] player1PointsBreakdown = new int[4];
     private int[] player2PointsBreakdown = new int[4];
+    private GameRenderer gameRenderer;
     private BulletManager bulletManager;
+    private final int[][] SPAWN_POINTS = {{80, 40}, {240, 40}, {400, 40}};
 
-    // Fixed enemy spawn points
-    private final int[][] SPAWN_POINTS = {
-            {80, 40},   // Top-left corner
-            {240, 40},  // Top-center
-            {400, 40}   // Top-right corner
-    };
-
-    // Конструкторы и публичные геттеры для доступа из GameRenderer
     public GameScreen(gdxGame game, int playerCount) {
-        this(game, playerCount, 1); // Start with level 1 by default
+        this(game, playerCount, 1);
     }
 
     public GameScreen(gdxGame game, int playerCount, int level) {
-        mapLoader = new MapLoader();
         this.playerCount = playerCount;
         this.game = game;
         game.addObserver(this);
@@ -129,7 +92,6 @@ public class GameScreen implements Screen, GameObserver {
         font = new BitmapFont(true);
         largeFont = new BitmapFont(false);
         largeFont.getData().setScale(5f);
-        collisionManager = new CollisionManager(mapLoader, player1, player2, enemies);
 
         Assets.loadLevel(currentLevel);
         Assets.loadCurtainTextures();
@@ -153,87 +115,86 @@ public class GameScreen implements Screen, GameObserver {
             hitSound = null;
         }
 
-        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1, this,collisionManager);
+        mapLoader = new MapLoader();
+        collisionManager = new CollisionManager(mapLoader, null, null, enemies);
+        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1, this, collisionManager);
         player1 = player1Factory.create();
         player1.positionX = 152;
         player1.positionY = 450;
+        if (!collisionManager.isSpawnPointClear(player1.positionX, player1.positionY)) {
+            Gdx.app.error("GameScreen", "Player1 spawn point is blocked at x=152, y=450");
+            int[] freeSpawn = collisionManager.findNearestFreeSpot(152, 450);
+            player1.positionX = freeSpawn[0];
+            player1.positionY = freeSpawn[1];
+            Gdx.app.log("GameScreen", "Moved Player1 to free spot: x=" + freeSpawn[0] + ", y=" + freeSpawn[1]);
+        }
 
         if (playerCount == 2) {
-            PlayerTankFactory player2Factory = new PlayerTankFactory("green", 1, this,collisionManager);
+            PlayerTankFactory player2Factory = new PlayerTankFactory("green", 1, this, collisionManager);
             player2 = player2Factory.create();
             player2.positionX = 299;
             player2.positionY = 450;
+            if (!collisionManager.isSpawnPointClear(player2.positionX, player2.positionY)) {
+                Gdx.app.error("GameScreen", "Player2 spawn point is blocked at x=299, y=450");
+                int[] freeSpawn = collisionManager.findNearestFreeSpot(299, 450);
+                player2.positionX = freeSpawn[0];
+                player2.positionY = freeSpawn[1];
+                Gdx.app.log("GameScreen", "Moved Player2 to free spot: x=" + freeSpawn[0] + ", y=" + freeSpawn[1]);
+            }
         }
-        enemyManager = new EnemyManager(this, enemies);
 
-        inputHandler = new InputHandler(player1, player2, bullets, playerCount, this);
+        collisionManager = new CollisionManager(mapLoader, player1, player2, enemies);
+        player1.setCollisionManager(collisionManager);
+        if (player2 != null) {
+            player2.setCollisionManager(collisionManager);
+        }
+
+        enemyManager = new EnemyManager(this, enemies);
+        inputManager = new InputManager(this, player1, player2, bullets, playerCount);
         levelIntro = new LevelIntroAnimation(currentLevel);
         Assets.loadExplosionAnimation();
+
+        gameRenderer = new GameRenderer(this);
     }
 
-    // Публичные геттеры для GameRenderer
-    public int getPlayerCount() {
-        return playerCount;
-    }
-
-    public float getStateTime() {
-        return stateTime;
-    }
-
-    public Tank getPlayer1() {
-        return player1;
-    }
-
-    public Tank getPlayer2() {
-        return player2;
-    }
-
-    public ArrayList<Bullet> getBullets() {
-        return bullets;
-    }
     public CollisionManager getCollisionManager() {
         return collisionManager;
     }
 
-    public ArrayList<Tank> getEnemies() {
-        return enemies;
+    public int getPlayerCount() { return playerCount; }
+    public float getStateTime() { return stateTime; }
+    public Tank getPlayer1() { return player1; }
+    public Tank getPlayer2() { return player2; }
+    public ArrayList<Bullet> getBullets() { return bullets; }
+    public ArrayList<Tank> getEnemies() { return enemies; }
+    public ArrayList<Explosion> getExplosions() { return explosions; }
+    public boolean isLevelIntroPlaying() { return isLevelIntroPlaying; }
+    public void setLevelIntroPlaying(boolean playing) { isLevelIntroPlaying = playing; }
+    public LevelIntroAnimation getLevelIntro() { return levelIntro; }
+    public int getTotalKilledEnemies() { return totalKilledEnemies; }
+    public int getScore() { return score; }
+    public boolean isDebugMode() { return debugMode; }
+    public void toggleDebugMode() { debugMode = !debugMode; }
+    public static float getTileScale() { return TILE_SCALE; }
+    public static float getBaseTileShift() { return BASE_TILE_SHIFT; }
+    public com.badlogic.gdx.utils.Array<MapTile> getMapTiles() { return mapLoader.tiles; }
+    public int getBaseX() { return baseX; }
+    public int getBaseY() { return baseY; }
+    public MapTile getBaseTile() {
+        for (MapTile tile : mapLoader.tiles) {
+            if (tile.isBase && tile.x % 2 == 0 && tile.y % 2 == 0) {
+                return tile;
+            }
+        }
+        return null;
     }
-
-    public ArrayList<Explosion> getExplosions() {
-        return explosions;
-    }
-
-    public boolean isLevelIntroPlaying() {
-        return isLevelIntroPlaying;
-    }
-
-    public LevelIntroAnimation getLevelIntro() {
-        return levelIntro;
-    }
-
-    public int getTotalKilledEnemies() {
-        return totalKilledEnemies;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public boolean isDebugMode() {
-        return debugMode;
-    }
-
-    public static float getTileScale() {
-        return TILE_SCALE;
-    }
-
-    public static float getBaseTileShift() {
-        return BASE_TILE_SHIFT;
-    }
-
-    public com.badlogic.gdx.utils.Array<MapTile> getMapTiles() {
-        return mapLoader.tiles;
-    }
+    public int getOffsetX() { return -17; }
+    public int getOffsetY() { return -17; }
+    public int getTileSize() { return MapLoader.TILE_SIZE; }
+    public boolean isGameOver() { return gameOver; }
+    public boolean isPaused() { return isPaused; }
+    public void togglePause() { isPaused = !isPaused; }
+    public boolean isLevelComplete() { return levelComplete; }
 
     public void addPlayer1Score(int points) {
         player1Score += points;
@@ -247,23 +208,20 @@ public class GameScreen implements Screen, GameObserver {
         Gdx.app.log("ScoreDebug", "P2 Score: " + player2Score);
     }
 
+    public void restartGame() {
+        game.setScreen(new GameScreen(game, playerCount));
+        dispose();
+    }
+
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(192f / 255, 192f / 255, 192f / 255, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-        camera.update();
         stateTime += Gdx.graphics.getDeltaTime();
 
-        if (game.isGameOver()) {
-            gameOver = true;
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.P) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
-            isPaused = !isPaused;
-        }
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F1)) {
-            debugMode = !debugMode;
+        if (gameOver) {
+            Gdx.app.log("GameScreen", "Game Over detected, switching to GameOverScreen");
+            game.setScreen(new GameOverScreen(game, playerCount, player1Score, player2Score));
+            dispose();
+            return;
         }
 
         checkGameOver();
@@ -283,27 +241,7 @@ public class GameScreen implements Screen, GameObserver {
             }
         }
 
-        if (isLevelIntroPlaying) {
-            levelIntro.update(delta);
-            if (levelIntro.isFinished()) {
-                isLevelIntroPlaying = false;
-            }
-            batch.begin();
-            batch.draw(Assets.levelBack, 0, 0, 480, 480);
-            int offsetX = -17, offsetY = -17;
-            for (MapTile tile : mapLoader.tiles) {
-                float scaledSize = MapLoader.TILE_SIZE / TILE_SCALE;
-                float drawX = tile.x * scaledSize + offsetX;
-                float drawY = tile.y * scaledSize + offsetY;
-                batch.draw(tile.region, drawX, drawY, scaledSize, scaledSize);
-            }
-            levelIntro.render(batch);
-            batch.end();
-            return;
-        }
-
         if (!gameOver && !isPaused && !levelComplete) {
-            moveTimer += delta;
             if (player1 != null) player1.update(delta);
             if (player2 != null) player2.update(delta);
             for (Tank enemy : enemies) {
@@ -314,246 +252,22 @@ public class GameScreen implements Screen, GameObserver {
             enemyManager.update(delta);
             bulletManager.update(delta);
             updateExplosions(delta);
-            if (moveTimer >= MOVE_DELAY) {
-                inputHandler.handleInput(delta);
-                moveTimer = 0;
-            }
-        } else if (gameOver) {
-            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER)) {
-                game.setScreen(new GameScreen(game, playerCount));
-                dispose();
-                return;
-            }
         }
 
-        // Rendering code remains largely the same, except for debug info
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
-        batch.draw(Assets.levelBack, 0, 0, 480, 480);
-        batch.setColor(0, 0, 0, 0.4f);
-        batch.draw(Assets.pixel, 480, 0, 160, 480);
-        batch.setColor(Color.WHITE);
+        inputManager.handleInput(delta);
 
-        int offsetX = -17, offsetY = -17;
-        float scaled = MapLoader.TILE_SIZE / TILE_SCALE;
-        float baseOffsetX = -BASE_TILE_SHIFT;
-        float baseOffsetY = -BASE_TILE_SHIFT;
-        boolean baseDrawn = false;
-        for (MapTile tile : mapLoader.tiles) {
-            if (tile.isBase) {
-                if (!baseDrawn && tile.x % 2 == 0 && tile.y % 2 == 0) {
-                    float x = tile.x * scaled + offsetX + baseOffsetX;
-                    float y = tile.y * scaled + offsetY + baseOffsetY;
-                    batch.draw(tile.region, x, y, scaled * 2, scaled * 2);
-                    baseDrawn = true;
-                }
-            } else if (tile.isSolid) {
-                float x = tile.x * scaled + offsetX;
-                float y = tile.y * scaled + offsetY;
-                batch.draw(tile.region, x, y, scaled, scaled);
-            }
+        if (!gameOver && !levelComplete) {
+            gameRenderer.render(delta);
         }
-
-        if (player1 != null && player1.isAlive()) {
-            TextureRegion frame1 = player1.getCurrentFrame();
-            if (frame1 != null) {
-                if (!player1.isInvulnerable() || (int) (stateTime * 10) % 2 == 0) {
-                    batch.draw(frame1, player1.positionX, player1.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
-                }
-            }
-        }
-
-        if (player2 != null && player2.isAlive()) {
-            TextureRegion frame2 = player2.getCurrentFrame();
-            if (frame2 != null) {
-                if (!player2.isInvulnerable() || (int) (stateTime * 10) % 2 == 0) {
-                    batch.draw(frame2, player2.positionX, player2.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
-                }
-            }
-        }
-
-        for (Tank enemy : enemies) {
-            if (enemy != null && enemy.isAlive()) {
-                TextureRegion enemyFrame = enemy.getCurrentFrame();
-                if (enemyFrame != null) {
-                    batch.draw(enemyFrame, enemy.positionX, enemy.positionY, 26 / TILE_SCALE, 26 / TILE_SCALE);
-                }
-            }
-        }
-
-        for (Bullet bullet : bullets) {
-            if (bullet.isActive() && bullet.getTexture() != null) {
-                if (bullet.getPositionX() >= 0 && bullet.getPositionX() < 480 &&
-                        bullet.getPositionY() >= 0 && bullet.getPositionY() < 480) {
-                    batch.draw(bullet.getTexture(), bullet.getPositionX(), bullet.getPositionY(), 4, 4);
-                }
-            }
-        }
-
-        for (Explosion explosion : explosions) {
-            if (!explosion.isFinished()) {
-                TextureRegion frame = explosion.getCurrentFrame();
-                if (frame != null) {
-                    batch.draw(frame, explosion.getPositionX(), explosion.getPositionY(), 32, 32);
-                }
-            }
-        }
-
-        font.setColor(Color.BLACK);
-        font.draw(batch, "Score: " + score, 500, 50);
-        font.draw(batch, "Enemies: " + (10 - totalKilledEnemies) + "/10", 500, 70);
-        if (Assets.enemyIcon != null) {
-            int totalEnemies = 10;
-            int iconsPerColumn = 5;
-            int iconSpacing = 20;
-            int baseXIcon = 500;
-            int baseYIcon = 90;
-            for (int i = 0; i < totalEnemies; i++) {
-                if (i < totalKilledEnemies) continue;
-                int col = i / iconsPerColumn;
-                int row = i % iconsPerColumn;
-                batch.draw(Assets.enemyIcon, baseXIcon + col * iconSpacing, baseYIcon + row * iconSpacing, 16, 16);
-            }
-        }
-
-        if (Assets.healthIcon != null && player1 != null) {
-            font.draw(batch, "P1: Health", 500, 220);
-            for (int i = 0; i < player1.getHealth(); i++) {
-                batch.draw(Assets.healthIcon, 500 + i * 20, 240, 16, 16);
-            }
-        }
-
-        if (Assets.healthIcon != null && player2 != null) {
-            font.draw(batch, "P2: Health", 500, 270);
-            for (int i = 0; i < player2.getHealth(); i++) {
-                batch.draw(Assets.healthIcon, 500 + i * 20, 290, 16, 16);
-            }
-        }
-
-        if (debugMode) {
-            for (int i = 0; i < enemies.size() && i < enemyManager.getEnemyMovementInfos().size(); i++) {
-                if (enemies.get(i).isAlive()) {
-                    EnemyManager.EnemyMovementInfo info = enemyManager.getEnemyMovementInfos().get(i);
-                    String dirStr;
-                    switch (info.direction) {
-                        case FORWARD:
-                            dirStr = "UP";
-                            break;
-                        case BACKWARD:
-                            dirStr = "DOWN";
-                            break;
-                        case LEFT:
-                            dirStr = "LEFT";
-                            break;
-                        case RIGHT:
-                            dirStr = "RIGHT";
-                            break;
-                        default:
-                            dirStr = "?"; // Optional: handle unexpected cases
-                            break;
-                    }
-                    // Debug drawing can be added if needed
-                }
-            }
-        }
-
-        batch.end();
-
-        if (gameOver || isPaused) {
-            textBatch.begin();
-            Matrix4 normalMatrix = new Matrix4();
-            normalMatrix.setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-            textBatch.setProjectionMatrix(normalMatrix);
-
-            if (gameOver) {
-                if (Assets.gameOverTexture != null) {
-                    textBatch.draw(Assets.gameOverTexture,
-                            Gdx.graphics.getWidth() / 2 - Assets.gameOverTexture.getWidth() / 2,
-                            Gdx.graphics.getHeight() / 2 - Assets.gameOverTexture.getHeight() / 2);
-                } else {
-                    largeFont.setColor(Color.RED);
-                    GlyphLayout gameOverLayout = new GlyphLayout(largeFont, "GAME OVER");
-                    largeFont.draw(textBatch, "GAME OVER",
-                            Gdx.graphics.getWidth() / 2 - gameOverLayout.width / 2,
-                            Gdx.graphics.getHeight() / 2 + gameOverLayout.height / 2);
-
-                    GlyphLayout restartLayout = new GlyphLayout(largeFont, "Press ENTER to restart");
-                    largeFont.setColor(Color.WHITE);
-                    largeFont.draw(textBatch, "Press ENTER to restart",
-                            Gdx.graphics.getWidth() / 2 - restartLayout.width / 2,
-                            Gdx.graphics.getHeight() / 2 + gameOverLayout.height / 2 + 40);
-                }
-            } else if (isPaused) {
-                if (Assets.pauseTexture != null) {
-                    textBatch.draw(Assets.pauseTexture,
-                            Gdx.graphics.getWidth() / 2 - Assets.pauseTexture.getWidth() / 2,
-                            Gdx.graphics.getHeight() / 2 - Assets.pauseTexture.getHeight() / 2);
-                } else {
-                    largeFont.setColor(Color.YELLOW);
-                    GlyphLayout pauseLayout = new GlyphLayout(largeFont, "PAUSE");
-                    largeFont.draw(textBatch, "PAUSE",
-                            Gdx.graphics.getWidth() / 2 - pauseLayout.width / 2,
-                            Gdx.graphics.getHeight() / 2 + pauseLayout.height / 2);
-
-                    GlyphLayout continueLayout = new GlyphLayout(largeFont, "Press P or ESC to continue");
-                    largeFont.setColor(Color.WHITE);
-                    largeFont.draw(textBatch, "Press P or ESC to continue",
-                            Gdx.graphics.getWidth() / 2 - continueLayout.width / 2,
-                            Gdx.graphics.getHeight() / 2 + pauseLayout.height / 2 + 40);
-                }
-            }
-            textBatch.end();
-        }
-
-        if (debugMode) {
-            renderDebugInfo();
-        }
-    }
-
-    private void renderDebugInfo() {
-        if (!debugMode) return;
-
-        textBatch.begin();
-
-        Matrix4 normalMatrix = new Matrix4();
-        normalMatrix.setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        textBatch.setProjectionMatrix(normalMatrix);
-
-        font.setColor(Color.WHITE);
-
-        // Draw debug info about UI assets
-        TextureUtils.drawDebugInfo(textBatch, font, 10, 100);
-
-        // Draw player info
-        font.draw(textBatch, "Player 1: " + (player1 != null ? "alive=" + player1.isAlive() : "null"), 10, 300);
-        font.draw(textBatch, "Player 2: " + (player2 != null ? "alive=" + player2.isAlive() : "null"), 10, 320);
-        font.draw(textBatch, "Player count: " + playerCount, 10, 340);
-        font.draw(textBatch, "Two player mode: " + (playerCount == 2), 10, 360);
-
-        textBatch.end();
     }
 
     private void checkGameOver() {
         boolean playersAlive = (player1 != null && player1.isAlive()) || (player2 != null && player2.isAlive());
-
-        boolean enemiesAlive = false;
-        for (Tank enemy : enemies) {
-            if (enemy != null && enemy.isAlive()) {
-                enemiesAlive = true;
-                break;
-            }
-        }
-
-        // Game ends if all players are dead
         if (!playersAlive) {
             gameOver = true;
+            Gdx.app.log("GameScreen", "Game Over: No players alive");
         }
     }
-
-    public static boolean isKeyPressed(int keycode) {
-        return Gdx.input.isKeyPressed(keycode);
-    }
-
 
     private void checkLevelComplete() {
         if (totalKilledEnemies >= 10 && !levelComplete && !gameOver) {
@@ -562,7 +276,6 @@ public class GameScreen implements Screen, GameObserver {
         }
     }
 
-    // Returns the nearest alive player for strategy use
     public Tank getNearestAlivePlayer(Tank enemy) {
         Tank nearest = null;
         float minDistSq = Float.MAX_VALUE;
@@ -603,12 +316,8 @@ public class GameScreen implements Screen, GameObserver {
     }
 
     public void onEnemyKilled() {
-        totalKilledEnemies++; // Increment counter
+        totalKilledEnemies++;
         Gdx.app.log("GameScreen", "Enemy killed! Total killed: " + totalKilledEnemies);
-    }
-
-    private void notifyEnemyKilled(Tank enemy) {
-        onEnemyKilled();
     }
 
     @Override
@@ -617,74 +326,68 @@ public class GameScreen implements Screen, GameObserver {
         Gdx.app.log("GameScreen", "Observer: Base destroyed!");
     }
 
-    public int getBaseX() {
-        return baseX;
-    }
-
-    // Get the Y coordinate of the base
-    public int getBaseY() {
-        return baseY;
-    }
-
-    // Get the base tile (top-left corner of the base)
-    public MapTile getBaseTile() {
-        for (MapTile tile : mapLoader.tiles) {
-            if (tile.isBase && tile.x % 2 == 0 && tile.y % 2 == 0) {
-                return tile;
-            }
-        }
-        return null;
-    }
-
     @Override
-    public void show() {
-        // Method called when the screen is shown
-    }
-
+    public void show() {}
     @Override
-    public void resize(int width, int height) {
-        // Method called when the window is resized
-    }
-
+    public void resize(int width, int height) {}
     @Override
-    public void pause() {
-        isPaused = true;
-    }
-
+    public void pause() { isPaused = true; }
     @Override
-    public void resume() {
-        // Can keep the game paused when the window is restored
-    }
-
+    public void resume() {}
     @Override
-    public void hide() {
-        // Method called when the screen is hidden
-    }
+    public void hide() {}
 
     @Override
     public void dispose() {
-        batch.dispose();
-        textBatch.dispose();
-        for (Bullet bullet : bullets) {
-            if (bullet != null) {
-                bullet.dispose();
-            }
+        Gdx.app.log("GameScreen", "Disposing GameScreen resources");
+        if (batch != null) {
+            batch.dispose();
+            batch = null;
         }
-        font.dispose();
-        largeFont.dispose();
-        if (explosionSound != null) explosionSound.dispose();
-        if (hitSound != null) hitSound.dispose();
-        if (levelIntro != null) levelIntro.dispose();
-        game.removeObserver(this);
-    }
-    public int getOffsetX() {
-        return -17;
-    }
-
-    public int getOffsetY() {
-        return -17;
-    }
-    public int getTileSize() {
-        return MapLoader.TILE_SIZE;
+        if (textBatch != null) {
+            textBatch.dispose();
+            textBatch = null;
+        }
+        if (bullets != null) {
+            for (Bullet bullet : bullets) {
+                if (bullet != null) {
+                    bullet.dispose();
+                }
+            }
+            bullets.clear();
+        }
+        if (font != null) {
+            font.dispose();
+            font = null;
+        }
+        if (largeFont != null) {
+            largeFont.dispose();
+            largeFont = null;
+        }
+        if (explosionSound != null) {
+            explosionSound.stop();
+            explosionSound.dispose();
+            explosionSound = null;
+        }
+        if (hitSound != null) {
+            hitSound.stop();
+            hitSound.dispose();
+            hitSound = null;
+        }
+        if (levelIntro != null) {
+            levelIntro.dispose();
+            levelIntro = null;
+        }
+        if (inputManager != null) {
+            inputManager.dispose();
+            inputManager = null;
+        }
+        if (gameRenderer != null) {
+            gameRenderer.dispose();
+            gameRenderer = null;
+        }
+        if (game != null) {
+            game.removeObserver(this);
+        }
     }
 }

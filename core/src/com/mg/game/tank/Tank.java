@@ -342,4 +342,9 @@ public class Tank {
     public void setHealth(int health) {
         this.health = health;
     }
+    // Новый сеттер для collisionManager
+    public void setCollisionManager(CollisionManager collisionManager) {
+        this.collisionManager = collisionManager;
+        Gdx.app.log("Tank", "CollisionManager set for tank: " + colour);
+    }
 }
