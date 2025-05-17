@@ -72,52 +72,58 @@ public class BulletManager {
                         screen.onEnemyKilled();
                         explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
                         if (explosionSound != null) explosionSound.play();
-                        // Add score to the player
                         String color = bullet.getColor();
                         if ("yellow".equalsIgnoreCase(color)) {
                             screen.addPlayer1Score(100);
                         } else if ("green".equalsIgnoreCase(color)) {
                             screen.addPlayer2Score(100);
                         }
-                        Gdx.app.log("ScoreDebug", "Bullet hit by " + color + ", +100 points");
                     }
                     return true;
                 }
             }
+
+            //  NEW: Allow friendly fire between players
+            Tank player1 = screen.getPlayer1();
+            Tank player2 = screen.getPlayer2();
+            if (player1 != null && player1.isAlive() && !"yellow".equalsIgnoreCase(bullet.getColor()) &&
+                    bullet.getBounds().overlaps(player1.getBounds())) {
+                boolean killed = player1.takeDamage();
+                explosions.add(new ExplosionFactory(player1.positionX, player1.positionY).create());
+                if (explosionSound != null) explosionSound.play();
+                return true;
+            }
+            if (player2 != null && player2.isAlive() && !"green".equalsIgnoreCase(bullet.getColor()) &&
+                    bullet.getBounds().overlaps(player2.getBounds())) {
+                boolean killed = player2.takeDamage();
+                explosions.add(new ExplosionFactory(player2.positionX, player2.positionY).create());
+                if (explosionSound != null) explosionSound.play();
+                return true;
+            }
         }
 
-        // Collision with players (for enemy bullets)
+        // Enemy bullets damaging players
         if (bullet.isFromEnemy()) {
             Tank player1 = screen.getPlayer1();
-            if (player1 != null && player1.isAlive() && bullet.getBounds().overlaps(player1.getBounds())) {
-                boolean wasKilled = player1.takeDamage();
-                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
-                if (explosionSound != null) explosionSound.play();
-                Gdx.app.log("BulletManager", "Enemy bullet hit Player 1, health=" + player1.getHealth());
-                return true;
-            }
             Tank player2 = screen.getPlayer2();
-            if (player2 != null && player2.isAlive() && bullet.getBounds().overlaps(player2.getBounds())) {
-                boolean wasKilled = player2.takeDamage();
-                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
+
+            if (player1 != null && player1.isAlive() && bullet.getBounds().overlaps(player1.getBounds())) {
+                boolean killed = player1.takeDamage();
+                explosions.add(new ExplosionFactory(player1.positionX, player1.positionY).create());
                 if (explosionSound != null) explosionSound.play();
-                Gdx.app.log("BulletManager", "Enemy bullet hit Player 2, health=" + player2.getHealth());
                 return true;
             }
-        }
-
-
-        // Collision with base (for both player and enemy bullets)
-        MapTile baseTile = screen.getBaseTile();
-        if (baseTile != null && bullet.getBounds().overlaps(baseTile.getBounds(screen.getTileSize(), screen.getTileScale(), screen.getOffsetX(), screen.getOffsetY()))) {
-            screen.onBaseDestroyed();
-            explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
-            if (explosionSound != null) explosionSound.play();
-            return true;
+            if (player2 != null && player2.isAlive() && bullet.getBounds().overlaps(player2.getBounds())) {
+                boolean killed = player2.takeDamage();
+                explosions.add(new ExplosionFactory(player2.positionX, player2.positionY).create());
+                if (explosionSound != null) explosionSound.play();
+                return true;
+            }
         }
 
         return false;
     }
+
     public Sound getExplosionSound() {
         return explosionSound;
     }
