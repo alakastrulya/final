@@ -46,16 +46,13 @@ public class GameScreen implements Screen, GameObserver {
     private int totalKilledEnemies;
     private InputManager inputManager;
     private int score = 0;
-    private boolean gameOver = false;
     private BitmapFont font;
     private BitmapFont largeFont;
     private Sound explosionSound;
     private Sound hitSound;
-    private boolean isPaused = false;
     private MapLoader mapLoader;
     private static final float TILE_SCALE = 0.87f;
     private static final float BASE_TILE_SHIFT = MapLoader.TILE_SIZE / TILE_SCALE;
-    private boolean levelComplete = false;
     private float levelCompleteTimer = 0f;
     private CollisionManager collisionManager;
     private static final float LEVEL_COMPLETE_DELAY = 2.0f;
@@ -69,6 +66,8 @@ public class GameScreen implements Screen, GameObserver {
     private int[] player2PointsBreakdown = new int[4];
     private GameRenderer gameRenderer;
     private BulletManager bulletManager;
+    private GameStateManager gameStateManager;
+
     private final int[][] SPAWN_POINTS = {{80, 40}, {240, 40}, {400, 40}};
 
     public GameScreen(gdxGame game, int playerCount) {
@@ -92,6 +91,8 @@ public class GameScreen implements Screen, GameObserver {
         font = new BitmapFont(true);
         largeFont = new BitmapFont(false);
         largeFont.getData().setScale(5f);
+        gameStateManager = new GameStateManager();
+
 
         Assets.loadLevel(currentLevel);
         Assets.loadCurtainTextures();
@@ -157,6 +158,10 @@ public class GameScreen implements Screen, GameObserver {
         gameRenderer = new GameRenderer(this);
     }
 
+    public GameStateManager getGameStateManager() {
+        return gameStateManager;
+    }
+
     public CollisionManager getCollisionManager() {
         return collisionManager;
     }
@@ -191,10 +196,12 @@ public class GameScreen implements Screen, GameObserver {
     public int getOffsetX() { return -17; }
     public int getOffsetY() { return -17; }
     public int getTileSize() { return MapLoader.TILE_SIZE; }
-    public boolean isGameOver() { return gameOver; }
-    public boolean isPaused() { return isPaused; }
-    public void togglePause() { isPaused = !isPaused; }
-    public boolean isLevelComplete() { return levelComplete; }
+    public boolean isGameOver() { return gameStateManager.isGameOver(); }
+    public boolean isPaused() {
+        return gameStateManager.isPaused(); }
+    public void togglePause() {
+        gameStateManager.togglePause(); }
+    public boolean isLevelComplete() { return gameStateManager.isLevelComplete(); }
 
     public void addPlayer1Score(int points) {
         player1Score += points;
@@ -217,7 +224,7 @@ public class GameScreen implements Screen, GameObserver {
     public void render(float delta) {
         stateTime += Gdx.graphics.getDeltaTime();
 
-        if (gameOver) {
+        if (gameStateManager.isGameOver()) {
             Gdx.app.log("GameScreen", "Game Over detected, switching to GameOverScreen");
             game.setScreen(new GameOverScreen(game, playerCount, player1Score, player2Score));
             dispose();
@@ -227,9 +234,9 @@ public class GameScreen implements Screen, GameObserver {
         checkGameOver();
         checkLevelComplete();
 
-        if (levelComplete) {
-            levelCompleteTimer += delta;
-            if (levelCompleteTimer >= LEVEL_COMPLETE_DELAY) {
+        if (gameStateManager.isLevelComplete()) {
+            gameStateManager.update(delta);
+            if (gameStateManager.shouldSwitchToLevelCompleteScreen()) {
                 int[] tankCounts = new int[4];
                 for (int i = 0; i < 4; i++) {
                     tankCounts[i] = (player1PointsBreakdown[i] + player2PointsBreakdown[i]) / 100;
@@ -241,7 +248,7 @@ public class GameScreen implements Screen, GameObserver {
             }
         }
 
-        if (!gameOver && !isPaused && !levelComplete) {
+        if (!gameStateManager.isGameOver() && !gameStateManager.isPaused() && !gameStateManager.isLevelComplete()) {
             if (player1 != null) player1.update(delta);
             if (player2 != null) player2.update(delta);
             for (Tank enemy : enemies) {
@@ -256,7 +263,7 @@ public class GameScreen implements Screen, GameObserver {
 
         inputManager.handleInput(delta);
 
-        if (!gameOver && !levelComplete) {
+        if (!gameStateManager.isGameOver() && !gameStateManager.isLevelComplete()) {
             gameRenderer.render(delta);
         }
     }
@@ -264,15 +271,14 @@ public class GameScreen implements Screen, GameObserver {
     private void checkGameOver() {
         boolean playersAlive = (player1 != null && player1.isAlive()) || (player2 != null && player2.isAlive());
         if (!playersAlive) {
-            gameOver = true;
+            gameStateManager.triggerGameOver();;
             Gdx.app.log("GameScreen", "Game Over: No players alive");
         }
     }
 
     private void checkLevelComplete() {
-        if (totalKilledEnemies >= 10 && !levelComplete && !gameOver) {
-            levelComplete = true;
-            levelCompleteTimer = 0f;
+        if (totalKilledEnemies >= 10 && !gameStateManager.isLevelComplete() && !gameStateManager.isGameOver()) {
+            gameStateManager.triggerLevelComplete();
         }
     }
 
@@ -322,7 +328,7 @@ public class GameScreen implements Screen, GameObserver {
 
     @Override
     public void onBaseDestroyed() {
-        gameOver = true;
+        gameStateManager.triggerGameOver();
         Gdx.app.log("GameScreen", "Observer: Base destroyed!");
     }
 
@@ -331,7 +337,9 @@ public class GameScreen implements Screen, GameObserver {
     @Override
     public void resize(int width, int height) {}
     @Override
-    public void pause() { isPaused = true; }
+    public void pause() {
+        gameStateManager.togglePause();
+    }
     @Override
     public void resume() {}
     @Override
