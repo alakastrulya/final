@@ -1,8 +1,7 @@
 package com.mg.game.tank.factory;
 
-import com.mg.game.CollisionManager;
+import com.mg.game.manager.CollisionManager;
 import com.mg.game.GameScreen;
-import com.mg.game.bullet.BulletFactory;
 import com.mg.game.tank.Tank;
 
 public class PlayerTankFactory implements Factory<Tank> {

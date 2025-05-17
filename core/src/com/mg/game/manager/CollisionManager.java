@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.manager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Rectangle;
@@ -239,4 +239,12 @@ public class CollisionManager {
         Gdx.app.error("CollisionManager", "Could not find free spawn point near " + startX + ", " + startY);
         return new int[]{startX, startY};
     }
+    public MapLoader getMapLoader() {
+        return mapLoader;
+    }
+
+    public ArrayList<Tank> getEnemies() {
+        return enemies;
+    }
+
 }

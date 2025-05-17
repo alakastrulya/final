@@ -1,4 +1,4 @@
-package com.mg.game;
+package com.mg.game.manager;
 
 public class GameStateManager {
     private boolean paused = false;

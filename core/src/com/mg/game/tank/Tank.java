@@ -3,13 +3,11 @@ package com.mg.game.tank;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
-import com.mg.game.CollisionManager;
+import com.mg.game.manager.CollisionManager;
 import com.mg.game.GameScreen;
 import com.mg.game.bullet.Bullet;
-import com.mg.game.bullet.BulletFactory;
 import com.mg.game.assets.Assets;
 import com.mg.game.strategy.EnemyStrategy;
-import com.mg.game.tank.factory.Factory;
 import com.mg.game.tank.state.StandingByState;
 
 import java.util.Random;

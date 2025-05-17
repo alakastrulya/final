@@ -106,6 +106,7 @@ public class BulletManager {
             }
         }
 
+
         // Collision with base (for both player and enemy bullets)
         MapTile baseTile = screen.getBaseTile();
         if (baseTile != null && bullet.getBounds().overlaps(baseTile.getBounds(screen.getTileSize(), screen.getTileScale(), screen.getOffsetX(), screen.getOffsetY()))) {
@@ -117,4 +118,8 @@ public class BulletManager {
 
         return false;
     }
+    public Sound getExplosionSound() {
+        return explosionSound;
+    }
+
 }

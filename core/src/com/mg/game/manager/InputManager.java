@@ -1,7 +1,8 @@
-package com.mg.game;
+package com.mg.game.manager;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.mg.game.GameScreen;
 import com.mg.game.bullet.Bullet;
 import com.mg.game.command.InputHandler;
 import com.mg.game.tank.Tank;
