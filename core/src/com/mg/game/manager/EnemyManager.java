@@ -10,6 +10,8 @@ import com.mg.game.strategy.EnemyStrategy;
 import com.mg.game.strategy.WanderStrategy;
 import com.mg.game.tank.Tank;
 import com.mg.game.tank.factory.EnemyTankFactory;
+import com.mg.game.tank.factory.PlayerTankFactory;
+import com.mg.game.tank.factory.TankParams;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -67,9 +69,10 @@ public class EnemyManager {
     }
 
     private void initializeEnemies() {
-        EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1, gameScreen);
+        EnemyTankFactory enemyFactory = new EnemyTankFactory();
+        TankParams enemyParams = new TankParams("red", 1, true, gameScreen, collisionManager );
         for (int i = 0; i < MAX_ENEMIES_ON_MAP; i++) {
-            Tank enemy = enemyFactory.create();
+            Tank enemy = enemyFactory.create(enemyParams);
             enemy.setStrategy(getRandomStrategy());
 
             int spawnPointIndex = i % spawnPoints.length;
@@ -269,8 +272,9 @@ private void spawnNewEnemy() {
     int spawnX = spawnPoints[spawnPointIndex][0];
     int spawnY = spawnPoints[spawnPointIndex][1];
 
-    EnemyTankFactory enemyFactory = new EnemyTankFactory("red", 1, gameScreen);
-    Tank enemy = enemyFactory.create();
+    TankParams enemyParams = new TankParams("red", 1, true, gameScreen, collisionManager );
+    EnemyTankFactory enemyFactory = new EnemyTankFactory();
+    Tank enemy = enemyFactory.create(enemyParams);
     enemy.setStrategy(getRandomStrategy());
 
     if (collisionManager.isSpawnPointClear(spawnX, spawnY)) {

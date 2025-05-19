@@ -3,8 +3,13 @@ package com.mg.game.map;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.Gdx;
+import com.mg.game.observer.GameContext;
+import com.mg.game.observer.GameEventPublisher;
 
 public class MapTile {
+    private com.mg.game.observer.GameEventPublisher eventPublisher;
+    private int level;
+    private int playerCount;
     public TextureRegion region;
     public TextureRegion damagedRegion;
     public final int x, y;
@@ -30,6 +35,11 @@ public class MapTile {
     }
 
     // old general setter, if still needed
+    public void setEventPublisher(GameEventPublisher publisher, int level, int playerCount) {
+        this.eventPublisher = publisher;
+        this.level = level;
+        this.playerCount = playerCount;
+    }
     public void setDamagedRegion(TextureRegion damaged) {
         this.damagedRegion = new TextureRegion(damaged);
     }
@@ -56,7 +66,9 @@ public class MapTile {
 
         if (isBase) {
             Gdx.app.log("GameScreen", "Eagle was hit!");
-            com.mg.game.gdxGame.setGameOverFlag(); // we will call this method (added below)
+            if (eventPublisher != null) {
+                eventPublisher.notifyBaseDestroyed(new GameContext(level, playerCount, "enemy"));
+            }
         }
     }
 }

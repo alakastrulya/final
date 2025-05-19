@@ -5,8 +5,10 @@ import com.badlogic.gdx.audio.Sound;
 import com.mg.game.GameScreen;
 import com.mg.game.explosion.Explosion;
 import com.mg.game.explosion.ExplosionFactory;
+import com.mg.game.explosion.ExplosionParams;
 import com.mg.game.map.MapTile;
 import com.mg.game.tank.Tank;
+import com.mg.game.tank.factory.Factory;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,12 +19,14 @@ public class BulletManager {
     private final ArrayList<Explosion> explosions;
     private final GameScreen screen;
     private final Sound explosionSound;
+    private final Factory<Explosion, ExplosionParams> explosionFactory;
 
-    public BulletManager(ArrayList<Bullet> bullets, ArrayList<Explosion> explosions, GameScreen screen, Sound explosionSound) {
+    public BulletManager(ArrayList<Bullet> bullets, ArrayList<Explosion> explosions, GameScreen screen, Sound explosionSound, Factory<Explosion, ExplosionParams> explosionFactory) {
         this.bullets = bullets;
         this.explosions = explosions;
         this.screen = screen;
         this.explosionSound = explosionSound;
+        this.explosionFactory = explosionFactory;
     }
 
     public void update(float delta) {
@@ -57,7 +61,7 @@ public class BulletManager {
         for (MapTile tile : screen.getMapTiles()) {
             if (tile.isSolid && bullet.getBounds().overlaps(tile.getBounds(screen.getTileSize(), screen.getTileScale(), screen.getOffsetX(), screen.getOffsetY()))) {
                 if (tile.isDestructible) tile.takeHit();
-                explosions.add(new ExplosionFactory(bullet.getPositionX(), bullet.getPositionY()).create());
+                explosions.add(explosionFactory.create(new ExplosionParams(bullet.getPositionX(), bullet.getPositionY())));
                 if (explosionSound != null) explosionSound.play();
                 return true;
             }
@@ -70,7 +74,7 @@ public class BulletManager {
                     boolean wasKilled = enemy.takeDamage();
                     if (wasKilled) {
                         screen.onEnemyKilled();
-                        explosions.add(new ExplosionFactory(enemy.positionX, enemy.positionY).create());
+                        explosions.add(explosionFactory.create(new ExplosionParams(enemy.positionX, enemy.positionY)));
                         if (explosionSound != null) explosionSound.play();
                         String color = bullet.getColor();
                         if ("yellow".equalsIgnoreCase(color)) {
@@ -89,14 +93,14 @@ public class BulletManager {
             if (player1 != null && player1.isAlive() && !"yellow".equalsIgnoreCase(bullet.getColor()) &&
                     bullet.getBounds().overlaps(player1.getBounds())) {
                 boolean killed = player1.takeDamage();
-                explosions.add(new ExplosionFactory(player1.positionX, player1.positionY).create());
+                explosions.add(explosionFactory.create(new ExplosionParams(player1.positionX, player1.positionY)));
                 if (explosionSound != null) explosionSound.play();
                 return true;
             }
             if (player2 != null && player2.isAlive() && !"green".equalsIgnoreCase(bullet.getColor()) &&
                     bullet.getBounds().overlaps(player2.getBounds())) {
                 boolean killed = player2.takeDamage();
-                explosions.add(new ExplosionFactory(player2.positionX, player2.positionY).create());
+                explosions.add(explosionFactory.create(new ExplosionParams(player2.positionX, player2.positionY)));
                 if (explosionSound != null) explosionSound.play();
                 return true;
             }
@@ -109,13 +113,13 @@ public class BulletManager {
 
             if (player1 != null && player1.isAlive() && bullet.getBounds().overlaps(player1.getBounds())) {
                 boolean killed = player1.takeDamage();
-                explosions.add(new ExplosionFactory(player1.positionX, player1.positionY).create());
+                explosions.add(explosionFactory.create(new ExplosionParams(player1.positionX, player1.positionY)));
                 if (explosionSound != null) explosionSound.play();
                 return true;
             }
             if (player2 != null && player2.isAlive() && bullet.getBounds().overlaps(player2.getBounds())) {
                 boolean killed = player2.takeDamage();
-                explosions.add(new ExplosionFactory(player2.positionX, player2.positionY).create());
+                explosions.add(explosionFactory.create(new ExplosionParams(player2.positionX, player2.positionY)));
                 if (explosionSound != null) explosionSound.play();
                 return true;
             }
