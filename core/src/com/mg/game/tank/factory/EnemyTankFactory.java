@@ -8,6 +8,9 @@ public class EnemyTankFactory implements Factory<Tank, TankParams>  {
 
     @Override
     public Tank create(TankParams params) {
-        return new Tank(params.colour, params.level, true, params.screen, params.collisionManager);
+        return new Tank(params.colour, params.level, true,
+                params.screen, params.collisionManager);
     }
 }
+
+

@@ -16,6 +16,7 @@ import com.mg.game.level.LevelIntroAnimation;
 import com.mg.game.manager.*;
 import com.mg.game.map.MapLoader;
 import com.mg.game.map.MapTile;
+import com.mg.game.observer.GameContext;
 import com.mg.game.observer.GameObserver;
 import com.mg.game.tank.Tank;
 import com.mg.game.tank.factory.PlayerTankFactory;
@@ -73,7 +74,7 @@ public class GameScreen implements Screen, GameObserver {
     public GameScreen(gdxGame game, int playerCount, int level) {
         this.playerCount = playerCount;
         this.game = game;
-        game.addObserver(this);
+        game.getEventPublisher().addObserver(this);
         this.currentLevel = level;
         camera = new OrthographicCamera();
         camera.setToOrtho(true, 640, 480);
@@ -113,6 +114,11 @@ public class GameScreen implements Screen, GameObserver {
         }
 
         mapLoader = new MapLoader();
+        for (MapTile tile : mapLoader.tiles) {
+            if (tile.isBase) {
+                tile.setEventPublisher(game.getEventPublisher(), currentLevel, playerCount);
+            }
+        }
         collisionManager = new CollisionManager(mapLoader, null, null, enemies);
         PlayerTankFactory playerFactory = new PlayerTankFactory();
         TankParams p1Params = new TankParams("yellow", 1, false, this, collisionManager);
@@ -324,9 +330,10 @@ public class GameScreen implements Screen, GameObserver {
     }
 
     @Override
-    public void onBaseDestroyed() {
+    public void onBaseDestroyed(GameContext context) {
         gameStateManager.triggerGameOver();
-        Gdx.app.log("GameScreen", "Observer: Base destroyed!");
+        Gdx.app.log("GameScreen", "Observer: Base destroyed by " + context.destroyedBy +
+                " on level " + context.level + ", players: " + context.playerCount);
     }
 
     @Override
@@ -392,7 +399,7 @@ public class GameScreen implements Screen, GameObserver {
             gameRenderer = null;
         }
         if (game != null) {
-            game.removeObserver(this);
+            game.getEventPublisher().removeObserver(this);
         }
     }
 }

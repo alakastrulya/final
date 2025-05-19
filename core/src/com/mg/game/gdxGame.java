@@ -1,23 +1,22 @@
 package com.mg.game;
 
 import com.badlogic.gdx.Game;
-import com.mg.game.observer.GameObserver;
 import com.mg.game.menu.MenuScreen;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.mg.game.observer.GameContext;
+import com.mg.game.observer.GameEventDispatcher;
+import com.mg.game.observer.GameEventPublisher;
+import com.mg.game.observer.GameObserver;
 
 public class gdxGame extends Game {
 
 	public MenuScreen menuScreen;
+
 	private static boolean gameOverFlag = false;
 
-	// New: list of observers
-	private static final List<GameObserver> observers = new ArrayList<>();
+	private final GameEventDispatcher eventDispatcher = new GameEventDispatcher();
 
-	public static void setGameOverFlag() {
-		gameOverFlag = true;
-		notifyBaseDestroyed(); // now notify everyone
+	public GameEventPublisher getEventPublisher() {
+		return eventDispatcher;
 	}
 
 	public static boolean isGameOver() {
@@ -29,23 +28,13 @@ public class gdxGame extends Game {
 	}
 
 	@Override
-	public void create(){
+	public void create() {
 		menuScreen = new MenuScreen(this);
 		setScreen(menuScreen);
 	}
 
-	// Methods for managing subscribers
-	public static void addObserver(GameObserver observer) {
-		if (!observers.contains(observer)) {
-			observers.add(observer);
-		}
-	}
-	public static void removeObserver(GameObserver observer) {
-		observers.remove(observer);
-	}
-	public static void notifyBaseDestroyed() {
-		for (GameObserver o : observers) {
-			o.onBaseDestroyed();
-		}
+	public void setGameOver(GameContext context) {
+		gameOverFlag = true;
+		eventDispatcher.notifyBaseDestroyed(context);
 	}
 }
