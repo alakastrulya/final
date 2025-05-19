@@ -4,25 +4,10 @@ import com.mg.game.manager.CollisionManager;
 import com.mg.game.GameScreen;
 import com.mg.game.tank.Tank;
 
-public class EnemyTankFactory implements Factory {
-    private String colour;
-    private int level;
-    private GameScreen screen;
-    private CollisionManager collisionManager; // New field
-
-    public EnemyTankFactory(String colour, int level, GameScreen screen) {
-        this(colour, level, screen, null);
-    }
-
-    public EnemyTankFactory(String colour, int level, GameScreen screen, CollisionManager collisionManager) {
-        this.colour = colour;
-        this.level = level;
-        this.screen = screen;
-        this.collisionManager = collisionManager;
-    }
+public class EnemyTankFactory implements Factory<Tank, TankParams>  {
 
     @Override
-    public Tank create() {
-        return new Tank(colour, level, true, screen, collisionManager);
+    public Tank create(TankParams params) {
+        return new Tank(params.colour, params.level, true, params.screen, params.collisionManager);
     }
 }

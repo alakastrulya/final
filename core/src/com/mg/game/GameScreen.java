@@ -10,6 +10,7 @@ import com.mg.game.assets.Assets;
 import com.mg.game.bullet.Bullet;
 import com.mg.game.bullet.BulletManager;
 import com.mg.game.explosion.Explosion;
+import com.mg.game.explosion.ExplosionFactory;
 import com.mg.game.level.LevelCompleteScreen;
 import com.mg.game.level.LevelIntroAnimation;
 import com.mg.game.manager.*;
@@ -18,6 +19,7 @@ import com.mg.game.map.MapTile;
 import com.mg.game.observer.GameObserver;
 import com.mg.game.tank.Tank;
 import com.mg.game.tank.factory.PlayerTankFactory;
+import com.mg.game.tank.factory.TankParams;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -101,7 +103,7 @@ public class GameScreen implements Screen, GameObserver {
             Gdx.app.error("GameScreen", "Error loading explosion sound: " + e.getMessage());
             explosionSound = null;
         }
-        bulletManager = new BulletManager(bullets, explosions, this, explosionSound);
+        bulletManager = new BulletManager(bullets, explosions, this, explosionSound, new ExplosionFactory());
 
         try {
             hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.mp3"));
@@ -112,8 +114,9 @@ public class GameScreen implements Screen, GameObserver {
 
         mapLoader = new MapLoader();
         collisionManager = new CollisionManager(mapLoader, null, null, enemies);
-        PlayerTankFactory player1Factory = new PlayerTankFactory("yellow", 1, this, collisionManager);
-        player1 = player1Factory.create();
+        PlayerTankFactory playerFactory = new PlayerTankFactory();
+        TankParams p1Params = new TankParams("yellow", 1, false, this, collisionManager);
+        player1 = playerFactory.create(p1Params);
         player1.positionX = 152;
         player1.positionY = 450;
         if (!collisionManager.isSpawnPointClear(player1.positionX, player1.positionY)) {
@@ -125,8 +128,8 @@ public class GameScreen implements Screen, GameObserver {
         }
 
         if (playerCount == 2) {
-            PlayerTankFactory player2Factory = new PlayerTankFactory("green", 1, this, collisionManager);
-            player2 = player2Factory.create();
+            TankParams p2Params = new TankParams("green", 1, false, this, collisionManager);
+            player2 = playerFactory.create(p2Params);
             player2.positionX = 299;
             player2.positionY = 450;
             if (!collisionManager.isSpawnPointClear(player2.positionX, player2.positionY)) {
