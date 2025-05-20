@@ -92,6 +92,12 @@ public class GameScreen implements Screen, GameObserver {
 
 
         Assets.loadLevel(currentLevel);
+        Assets.loadSounds();
+
+        if (Assets.levelBeginSound != null) {
+            Assets.levelBeginSound.play();
+        }
+
         Assets.loadCurtainTextures();
         Assets.loadTankAnimations("yellow", 1);
         Assets.loadTankAnimations("green", 1);

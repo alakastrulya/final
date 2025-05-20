@@ -208,17 +208,12 @@ public class Assets {
         }
     }
 
-
     public static void loadSounds() {
         try {
             levelBeginSound = Gdx.audio.newSound(Gdx.files.internal("sounds/startLevel.mp3"));
-            explosionSound = Gdx.audio.newSound(Gdx.files.internal("sounds/explosion.mp3"));
-            hitSound = Gdx.audio.newSound(Gdx.files.internal("sounds/hit.mp3"));
         } catch (Exception e) {
-            Gdx.app.error("Assets", "Error loading sounds: " + e.getMessage());
+            Gdx.app.error("Assets", "Error loading start level sound: " + e.getMessage());
             levelBeginSound = null;
-            explosionSound = null;
-            hitSound = null;
         }
     }
 
