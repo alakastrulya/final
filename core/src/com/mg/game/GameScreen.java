@@ -206,6 +206,14 @@ public class GameScreen implements Screen, GameObserver {
         gameStateManager.togglePause(); }
     public boolean isLevelComplete() { return gameStateManager.isLevelComplete(); }
 
+    public int getPlayer1Score() {
+        return player1Score;
+    }
+
+    public int getPlayer2Score() {
+        return player2Score;
+    }
+
     public void addPlayer1Score(int points) {
         player1Score += points;
         player1PointsBreakdown[0] += 1;
@@ -266,7 +274,7 @@ public class GameScreen implements Screen, GameObserver {
 
         inputManager.handleInput(delta);
 
-        if (!gameStateManager.isGameOver() && !gameStateManager.isLevelComplete()) {
+        if (!gameStateManager.isGameOver()) {
             gameRenderer.render(delta);
         }
     }

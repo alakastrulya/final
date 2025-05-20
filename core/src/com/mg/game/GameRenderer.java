@@ -188,15 +188,18 @@ public class GameRenderer {
     }
 
     private void renderUI() {
-        font.draw(batch, "Score: " + gameScreen.getScore(), 500, 50);
-        font.draw(batch, "Enemies: " + (10 - gameScreen.getTotalKilledEnemies()) + "/10", 500, 70);
+        font.draw(batch, "P1 Score: " + gameScreen.getPlayer1Score(), 500, 50);
+        if (gameScreen.getPlayerCount() == 2) {
+            font.draw(batch, "P2 Score: " + gameScreen.getPlayer2Score(), 500, 70);
+        }
+        font.draw(batch, "Enemies: " + (10 - gameScreen.getTotalKilledEnemies()) + "/10", 500, 90);
 
         if (Assets.enemyIcon != null) {
             int totalEnemies = 10;
             int iconsPerColumn = 5;
             int iconSpacing = 20;
             int baseXIcon = 500;
-            int baseYIcon = 90;
+            int baseYIcon = 110;
 
             for (int i = 0; i < totalEnemies; i++) {
                 if (i < gameScreen.getTotalKilledEnemies()) continue;
