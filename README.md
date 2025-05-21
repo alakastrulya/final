@@ -86,3 +86,10 @@ Save and load progress
 Bonus items and power-ups
 
 More enemy types and maps
+
+## Authors - 2nd years students of Narxoz University
+- Abdrakhmanova Adelya
+- Akhmetova Aisha
+- Gabdyrafik Ravil
+
+Thank you for your attention! 
