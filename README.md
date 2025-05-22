@@ -60,8 +60,8 @@ This is a modern implementation of the classic Battle City game built using Java
 
 ## How to Run
 Clone the repository:
-git clone https://github.com/your-username/battle-tank-game.git
-cd battle-tank-game
+git clone https://github.com/alakastrulya/final
+cd final
 
 Run via Gradle:
 ./gradlew desktop:run
